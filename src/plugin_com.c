@@ -19,7 +19,8 @@
 ===========================================================================
 */
 
-
+// Unused?
+#if 0
 
 #include "plugin_handler.h"
 
@@ -60,7 +61,7 @@ for(i=0;i<MAX_PLUGINS;++i){
 
         if(pluginFunctions.plugins[i].loaded){
             if(Q_strncmp(pluginFunctions.plugins[i].name,name,sizeof(pluginFunctions.plugins[i].name))==0){
-                (*pluginFunctions.plugins[i].OnInfoRequest)(&info);
+                (*pluginFunctions.plugins[i].OnEvent[PLUGINS_ONINFOREQUEST])(&info);
                 return &(info.pluginVersion);
             }
         }
@@ -127,3 +128,4 @@ P_P_F void *Plugin_ImportFunction(char *pluginName, char *name){
     }
     return NULL;
 }
+#endif

@@ -20,13 +20,13 @@
 ===========================================================================
 */
 
-
-
 #ifndef __SYS_NET_H__
 #define __SYS_NET_H__
 
 #include "q_shared.h"
 #include "cvar.h"
+#include "sys_net_types.h"
+
 /*
 ==============================================================
 
@@ -34,52 +34,6 @@ NET
 
 ==============================================================
 */
-
-#define NET_ENABLEV4            0x01
-#define NET_ENABLEV6            0x02
-// if this flag is set, always attempt ipv6 connections instead of ipv4 if a v6 address is found.
-#define NET_PRIOV6              0x04
-// disables ipv6 multicast support if set.
-#define NET_DISABLEMCAST        0x08
-#define	PORT_ANY		-1
-
-#ifndef _WIN32
-	//#define SOCKET_DEBUG
-#endif
-
-typedef enum {
-	NA_BAD = 0,					// an address lookup failed
-	NA_BOT = 0,
-	NA_LOOPBACK = 2,
-	NA_BROADCAST = 3,
-	NA_IP = 4,
-	NA_IP6 = 5,
-	NA_TCP = 6,
-	NA_TCP6 = 7,
-	NA_MULTICAST6 = 8,
-	NA_UNSPEC = 9,
-	NA_DOWN = 10,
-} netadrtype_t;
-
-typedef enum {
-	NS_CLIENT,
-	NS_SERVER
-} netsrc_t;
-
-#define NET_ADDRSTRMAXLEN 48	// maximum length of an IPv6 address string including trailing '\0'
-
-typedef struct {
-	netadrtype_t	type;
-	int				scope_id;
-	unsigned short port;
-	unsigned short pad;
-	int				sock;	//Socket FD. 0 = any socket
-    union{
-	    byte	ip[4];
-	    byte	ipx[10];
-	    byte	ip6[16];
-	};
-}netadr_t;
 
 void		NET_Init( void );
 void		NET_Shutdown( void );
@@ -110,6 +64,7 @@ void		NET_LeaveMulticast6(void);
 __optimize3 __regparm1 qboolean	NET_Sleep(unsigned int usec);
 void NET_Clear(void);
 const char*	NET_AdrMaskToString(netadr_t *adr);
+const char *NET_AdrMaskToStringMT(netadr_t *a, char* buf, int len);
 int NET_GetStaticIPv6Address(netadr_t* adr, unsigned int startindex);
 __cdecl const char	*NET_AdrToStringShortMT(netadr_t *a, char* buf, int len);
 
@@ -139,14 +94,6 @@ const char* NET_GetHostAddress(char* adrstrbuf, int len);
 int NET_GetHostPort();
 netadr_t* NET_GetLocalAddressList(int* count);
 qboolean Sys_IsReservedAddress( netadr_t *adr );
-
-typedef enum {
-	TCP_AUTHWAIT,
-	TCP_AUTHNOTME,
-	TCP_AUTHBAD,
-	TCP_AUTHAGAIN,
-	TCP_AUTHSUCCESSFULL
-}tcpclientstate_t;
 
 extern cvar_t* net_enabled;
 

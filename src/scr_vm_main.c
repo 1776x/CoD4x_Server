@@ -29,6 +29,10 @@
 #include "sys_main.h"
 #include "sv_bots.h"
 #include "scr_vm_classfunc.h"
+#include "bg_weapons.h"
+#include "plugin_eventparams.h"
+#include "plugin_events.h"
+#include "plugin_handler.h"
 
 #include <stdarg.h>
 
@@ -673,38 +677,26 @@ void Scr_InitFunctions()
 
 int GScr_LoadScriptAndLabel(const char *scriptName, const char *labelName, qboolean mandatory)
 {
-
     int fh;
     PrecacheEntry load_buffer;
 
     if (!Scr_LoadScript(scriptName, &load_buffer, 0))
     {
         if (mandatory)
-        {
             Com_Error(ERR_DROP, "Could not find script '%s'", scriptName);
-        }
         else
-        {
             Com_DPrintf("Notice: Could not find script '%s' - this part will be disabled\n", scriptName);
-        }
         return 0;
     }
-
     fh = Scr_GetFunctionHandle(scriptName, labelName);
-
     if (!fh)
     {
         if (mandatory)
-        {
             Com_Error(ERR_DROP, "Could not find label '%s' in script '%s'", labelName, scriptName);
-        }
         else
-        {
             Com_DPrintf("Notice: Could not find label '%s' in script '%s' - this part will be disabled\n", labelName, scriptName);
-        }
         return 0;
     }
-
     return fh;
 }
 
@@ -832,7 +824,7 @@ void Scr_SetClientField(gclient_t* gcl, int num)
 }
 */
 
-void __cdecl GScr_LoadScripts(void)
+void __cdecl GScr_LoadScripts()
 {
     char mappath[MAX_QPATH];
     cvar_t *mapname;
@@ -974,7 +966,7 @@ __cdecl unsigned int Scr_LoadScript(const char *scriptname, PrecacheEntry *preca
         scrStruct.var_10 = "+";
         scrStruct.scr_buffer_handle = scr_buffer_handle;
         ScriptParse(&result, 0);
-        object = GetObjectA(GetVariable(scrStruct.var_04, handle));
+        object = _GetObjectA(GetVariable(scrStruct.var_04, handle));
 
         ScriptCompile(result, object, variable, precache, iarg_02);
 
@@ -1573,4 +1565,152 @@ unsigned int Scr_GetArrayId(unsigned int paramnum, VariableValue** v, int maxvar
     while ( var->hash.u.prevSibling && scrVarGlob_high[var->hash.u.prevSibling].hash.id && i < maxvariables);
 
     return 0;//GetArraySize(ptr);
+}
+
+short __cdecl Scr_ExecEntThreadNum(scr_entref_t entNum, void* zero, int callbackHook, unsigned int numArgs)
+{
+    return ((short (__cdecl*)(scr_entref_t, void*, int, unsigned int))0x08164FA0)(entNum, zero, callbackHook, numArgs);
+}
+
+short __cdecl Scr_ExecEntThread(gentity_t* ent, int callbackHook, unsigned int numArgs)
+{
+    return Scr_ExecEntThreadNum(ent->s.number, NULL, callbackHook, numArgs);
+}
+
+short __cdecl Scr_ExecThread( int callbackHook, unsigned int numArgs)
+{
+    return ((short (__cdecl*)(int, unsigned int))0x08165032)(callbackHook, numArgs);
+}
+
+void __cdecl Scr_FreeThread(short threadId)
+{
+    RemoveRefToObject(threadId);
+}
+
+void __cdecl RemoveRefToObject(unsigned int id)
+{
+    ((void (__cdecl*)(unsigned int))0x08157252)(id);
+}
+
+int __cdecl Scr_GetFunctionHandle(const char *scriptName, const char *labelName)
+{
+    return ((int(__cdecl*)(const char*, const char*))0x0814C1B4)(scriptName, labelName);
+}
+
+void __cdecl Scr_LoadGameType()
+{
+    Scr_FreeThread(Scr_ExecThread(g_scr_data.gametype, 0));
+    PHandler_Event(PLUGINS_SCRIPT_ONGAMETYPELOADED);
+}
+
+void __cdecl Scr_StartupGameType()
+{
+    Scr_FreeThread(Scr_ExecThread(g_scr_data.startgametype, 0));
+    PHandler_Event(PLUGINS_SCRIPT_ONGAMETYPESTARTED);
+}
+
+void __cdecl Scr_PlayerConnect(gentity_t *ent)
+{
+    Scr_FreeThread(Scr_ExecEntThread(ent, g_scr_data.playerconnect, 0));
+    PHandler_Event(PLUGINS_SCRIPT_ONPLAYERCONNECTED, ent);
+}
+
+void __cdecl Scr_PlayerDisconnect(gentity_t *ent)
+{
+    Scr_FreeThread(Scr_ExecEntThread(ent, g_scr_data.playerdisconnect, 0));
+    PHandler_Event(PLUGINS_SCRIPT_ONPLAYERDISCONNECTED, ent);
+}
+
+void __cdecl Scr_PlayerDamage(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int dflags, unsigned int meansOfDeath, int iWeapon, float *vPoint, float *vDir, hitLocation_t hitLoc, int timeOffset)
+{
+    Scr_AddInt(timeOffset);
+    Scr_AddConstString(G_GetHitLocationString(hitLoc));
+    vDir ? Scr_AddVector(vDir) : Scr_AddUndefined();
+    vPoint ? Scr_AddVector(vPoint) : Scr_AddUndefined();
+    Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
+    meansOfDeath <= 15 ? Scr_AddConstString(G_GetMeansOfDeathString(meansOfDeath)) : Scr_AddString("badMOD");
+    Scr_AddInt(dflags);
+    Scr_AddInt(damage);
+    attacker ? Scr_AddEntity(attacker) : Scr_AddUndefined();
+    inflictor ? Scr_AddEntity(inflictor) : Scr_AddUndefined();
+
+    Scr_FreeThread(Scr_ExecEntThread(self, g_scr_data.playerdamage, 10));
+
+    ScriptEventParams_OnPlayerDamage_t params;
+    params.self = self;
+    params.inflictor = inflictor;
+    params.attacker = attacker;
+    params.damage = damage;
+    params.dflags = dflags;
+    params.meansOfDeath = meansOfDeath;
+    params.iWeapon = iWeapon;
+    params.vPoint = vPoint;
+    params.vDir = vDir;
+    params.hitLoc = hitLoc;
+    params.timeOffset = timeOffset;
+    PHandler_Event(PLUGINS_SCRIPT_ONPLAYERDAMAGE, &params);
+}
+
+void __cdecl Scr_PlayerKilled(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, unsigned int meansOfDeath, int iWeapon, float *vDir, hitLocation_t hitLoc, int psTimeOffset, int deathAnimDuration)
+{
+    Scr_AddInt(deathAnimDuration);
+    Scr_AddInt(psTimeOffset);
+    Scr_AddConstString(G_GetHitLocationString(hitLoc));
+    vDir ? Scr_AddVector(vDir) : Scr_AddUndefined();
+    Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
+    meansOfDeath <= 15 ? Scr_AddConstString(G_GetMeansOfDeathString(meansOfDeath)) : Scr_AddString("badMOD");
+    Scr_AddInt(damage);
+    attacker ? Scr_AddEntity(attacker) : Scr_AddUndefined();
+    inflictor ? Scr_AddEntity(inflictor) : Scr_AddUndefined();
+
+    Scr_FreeThread(Scr_ExecEntThread(self, g_scr_data.playerkilled, 9));
+
+    ScriptEventParams_OnPlayerKilled_t params;
+    params.self = self;
+    params.inflictor = inflictor;
+    params.attacker = attacker;
+    params.damage = damage;
+    params.meansOfDeath = meansOfDeath;
+    params.iWeapon = iWeapon;
+    params.vDir = vDir;
+    params.hitLoc = hitLoc;
+    params.psTimeOffset = psTimeOffset;
+    params.deathAnimDuration = deathAnimDuration;
+    PHandler_Event(PLUGINS_SCRIPT_ONPLAYERKILLED, &params);
+}
+
+void __cdecl Scr_PlayerLastStand(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, unsigned int meansOfDeath, int iWeapon, float *vDir, hitLocation_t hitLoc, int psTimeOffset)
+{
+    Scr_AddInt(0);
+    Scr_AddInt(psTimeOffset);
+    Scr_AddConstString(G_GetHitLocationString(hitLoc));
+    vDir ? Scr_AddVector(vDir) : Scr_AddUndefined();
+    Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
+    meansOfDeath <= 15 ? Scr_AddConstString(G_GetMeansOfDeathString(meansOfDeath)) : Scr_AddString("badMOD");
+    Scr_AddInt(damage);
+    attacker ? Scr_AddEntity(attacker) : Scr_AddUndefined();
+    inflictor ? Scr_AddEntity(inflictor) : Scr_AddUndefined();
+
+    Scr_FreeThread(Scr_ExecEntThread(self, g_scr_data.playerlaststand, 9));
+
+    ScriptEventParams_OnPlayerLastStand_t params;
+    params.self = self;
+    params.inflictor = inflictor;
+    params.attacker = attacker;
+    params.damage = damage;
+    params.meansOfDeath = meansOfDeath;
+    params.iWeapon = iWeapon;
+    params.vDir = vDir;
+    params.hitLoc = hitLoc;
+    params.psTimeOffset = psTimeOffset;
+    PHandler_Event(PLUGINS_SCRIPT_ONPLAYERLASTSTAND, &params);
+}
+
+void __cdecl Scr_LoadLevel()
+{
+    if (g_scr_data.map)
+    {
+        Scr_FreeThread(Scr_ExecThread(g_scr_data.map, 0));
+        PHandler_Event(PLUGINS_SCRIPT_ONLEVELLOADED);
+    }
 }

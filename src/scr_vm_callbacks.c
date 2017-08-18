@@ -22,7 +22,7 @@
 
 
 #include "q_shared.h"
-#include "entity.h"
+#include "gentity.h"
 #include "scr_vm.h"
 
 //Only CoD4 gamescript callback functions here

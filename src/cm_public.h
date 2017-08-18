@@ -23,6 +23,7 @@
 
 #ifndef __CM_PUBLIC_H__
 #define __CM_PUBLIC_H__
+#include "q_shared_types.h"
 
 
 int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, uint16_t *list, int listsize, int *lastLeaf );
@@ -85,13 +86,6 @@ typedef struct
 	vec3_t end;
 	vec3_t invDelta;
 }TraceExtents;
-
-// trace->entityNum can also be 0 to (MAX_GENTITIES-1)
-// or ENTITYNUM_NONE, ENTITYNUM_WORLD
-#ifndef CLIPHANDLE_DEFINED
-#define CLIPHANDLE_DEFINED
-typedef unsigned int clipHandle_t;
-#endif
 
 qboolean CM_TraceBox(TraceExtents *extents, const float *mins, const float *maxs, float fraction);
 

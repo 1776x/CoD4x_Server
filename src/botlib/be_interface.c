@@ -88,7 +88,8 @@ int botlibsetup = qfalse;
 #define BMAX_PATH    MAX_QPATH
 #endif
 
-int Sys_MilliSeconds( void ) {
+unsigned int Sys_MilliSeconds()
+{
 // Ridah, faster Win32 code
 #ifdef _WIN32
 	int sys_curtime;

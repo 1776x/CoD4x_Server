@@ -37,6 +37,7 @@
 //#include <windows.h>
 #include <unistd.h>
 #include <errno.h>
+#include "version.h"
 
 
 
@@ -647,14 +648,8 @@ void Sec_Update( qboolean getbasefiles ){
     int transret;
 	FILE* lockfile;
 
-	struct version_t
-	{
-		int minor;
-		int major;
-	};
-
-	struct version_t newversion;
-	struct version_t currentversion;
+	version_t newversion;
+	version_t currentversion;
 
     if(!Sec_Initialized()){
 		return;

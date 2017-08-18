@@ -45,7 +45,8 @@
 
 #define	PORT_SERVER		28960
 
-#define	PROTOCOL_VERSION (unsigned int)(Sys_GetCommonVersion() + 0.00001)
+// MySQL defines its own "PROTOCOL_VERSION". So changing this to keep MySQL same.
+#define	COD4X_PROTOCOL_VERSION (unsigned int)(Sys_GetCommonVersion() + 0.00001)
 
 #define	LEGACY_PROTOCOL_VERSION	6
 

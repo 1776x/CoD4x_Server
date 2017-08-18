@@ -24,9 +24,9 @@
 #ifndef __NETCHAN_H__
 #define __NETCHAN_H__
 
-#include "q_shared.h"
 #include "sys_net.h"
 #include "msg.h"
+#include "netchan_types.h"
 
 
 //#define	MAC_STATIC			// be fragmented into multiple packets
@@ -37,46 +37,6 @@
 //#define SV_DECODE_START 12
 //#define SV_ENCODE_START 4
 //#define CL_ENCODE_START 9
-
-#define NETCHAN_UNSENTBUFFER_SIZE 0x20000
-#define NETCHAN_FRAGMENTBUFFER_SIZE 0x800
-
-#define MAX_PACKETLEN           1400        // max size of a network packet
-#define FRAGMENT_SIZE           ( MAX_PACKETLEN - 100 )
-
-
-typedef struct{
-	char command[MAX_STRING_CHARS];
-	int cmdTime;
-	int cmdType;
-}reliableCommands_t;
-
-
-typedef struct {
-	// sequencing variables
-	int			outgoingSequence;
-	netsrc_t	sock;
-	int			dropped;			// between last packet and previous
-	int			incomingSequence;
-
-	//Remote address
-	netadr_t	remoteAddress;			// (0x10)
-	unsigned short			qport;			// qport value to write when transmitting (0x24)
-	unsigned short			upperqport;
-	// incoming fragment assembly buffer
-	int			fragmentSequence;
-	int			fragmentLength;	
-	byte		*fragmentBuffer; // Old: (0x30)
-	int			fragmentBufferSize;
-
-	// outgoing fragment buffer
-	// we need to space out the sending of large fragmented messages
-	qboolean	unsentFragments;
-	int			unsentFragmentStart;
-	int			unsentLength;
-	byte		*unsentBuffer; //Old: (0x44)
-	int			unsentBufferSize;
-} netchan_t;
 
 
 void Netchan_Init( int port );
@@ -94,4 +54,5 @@ qboolean NET_SendData( int sock, msg_t* msg);
 int NET_TcpReceiveData( int sock, msg_t* msg);
 void NET_CookieInit();
 int NET_CookieHash(netadr_t*);
+
 #endif

@@ -29,7 +29,7 @@
 #include <setjmp.h>
 #include <inttypes.h>
 
-unsigned int Sys_Milliseconds( void );
+unsigned int Sys_Milliseconds();
 unsigned long long Sys_MillisecondsLong( void );
 unsigned long long Sys_MicrosecondsLong( void );
 
@@ -83,7 +83,7 @@ qboolean Sys_SetPermissionsExec(const char* ospath);
 void Sys_WaitForErrorConfirmation(const char* error);
 void  __attribute__ ((noreturn)) Sys_ExitForOS( int exitCode );
 
-
+void Sys_SleepMSec(int msec);
 void Sys_SleepSec(int seconds);
 int Sys_Backtrace(void** buffer, int size);
 void Sys_EventLoop(void);

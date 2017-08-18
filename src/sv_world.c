@@ -25,6 +25,7 @@
 #include "q_shared.h"
 #include "server.h"
 #include "cm_public.h"
+#include "g_entity.h"
 
 typedef struct moveclip_s{
 	vec3_t mins;	//0x00

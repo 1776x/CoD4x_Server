@@ -23,7 +23,7 @@
 
 
 #include "q_shared.h"
-#include "entity.h"
+#include "gentity.h"
 #include "player.h"
 #include "plugin_handler.h"
 #include "g_sv_shared.h"

@@ -60,84 +60,87 @@ typedef void convariable_t; //For plugins
 #define PLUGIN_MAX_SOCKETS 4
 
 // plugins com
-#define PLUGIN_COM_MAXNAMELEN 28    // Max 27 chars + \0
-#define PLUGIN_MAX_EXPORTS 50       // Maximum count of exported functions, each takes 32B of mem = 1kB per plugin
+#define PLUGIN_COM_MAXNAMELEN 28 // Max 27 chars + \0
+#define PLUGIN_MAX_EXPORTS 50    // Maximum count of exported functions, each takes 32B of mem = 1kB per plugin
 
 // ----------------------------//
 //  Plugin Handler's own types //
 // ----------------------------//
 
-enum {
+enum
+{
     PLUGIN_UNKNOWN = -1
 };
 
-typedef struct{
+typedef struct
+{
     char name[64];
     xcommand_t xcommand;
-}pluginCmd_t;
+} pluginCmd_t;
 
 struct __attribute__((__packed__)) dyncallstub_s
 {
-		byte mov_eax_esp4[4];
-		byte push_eax;
-		byte move_eax_ptr;
-		int32_t *hasControlAdr;
-		byte move_edx_ptr;
-		uint32_t pluginId;
-		byte move_eax_edx[2];
-		byte move_ecx_ptr;
-		xfunction_t xfunction;
-		byte call_ecx[2];
-		byte add_esp4[3];
-		byte move_eax2_ptr;
-		int32_t *hasControlAdr2;
-		byte move_edx2_ptr;
-		uint32_t nullpluginId;
-		byte move_eax_edx2[2];
-		byte ret;
+    byte mov_eax_esp4[4];
+    byte push_eax;
+    byte move_eax_ptr;
+    int32_t *hasControlAdr;
+    byte move_edx_ptr;
+    uint32_t pluginId;
+    byte move_eax_edx[2];
+    byte move_ecx_ptr;
+    xfunction_t xfunction;
+    byte call_ecx[2];
+    byte add_esp4[3];
+    byte move_eax2_ptr;
+    int32_t *hasControlAdr2;
+    byte move_edx2_ptr;
+    uint32_t nullpluginId;
+    byte move_eax_edx2[2];
+    byte ret;
 };
 
-typedef struct{
+typedef struct
+{
     char name[64];
-		qboolean isMethod;
-		struct dyncallstub_s dyncallstub;
-}pluginScriptCmd_t;
+    qboolean isMethod;
+    struct dyncallstub_s dyncallstub;
+} pluginScriptCmd_t;
 
-typedef struct{
+typedef struct
+{
     size_t size;
     void *ptr;
-}pluginMem_t;
+} pluginMem_t;
 
-typedef struct{
+typedef struct
+{
     char name[PLUGIN_COM_MAXNAMELEN];
     void *(*function)();
-}pluginExport_t;
+} pluginExport_t;
 
-typedef struct{
+typedef struct
+{
     int sock;
     netadr_t remote;
-    qboolean (*packetEventHandler)(netadr_t *from, msg_t* msg);
-}pluginTcpClientSocket_t;
+    qboolean (*packetEventHandler)(netadr_t *from, msg_t *msg);
+} pluginTcpClientSocket_t;
 
 #define MAX_PLUGINCALLBACKS 8
 #define MAX_PLUGINCALLBACKARGS 8
-typedef struct{
-  void (*callbackMain)();
-  void (*threadMain)(void* a, ...);
-  qboolean isActive;
-  qboolean lock;
-  void* callback_args[MAX_PLUGINCALLBACKARGS];
-  void* thread_args[MAX_PLUGINCALLBACKARGS];
-  threadid_t tid;
-}plugin_thread_callback_t;
+typedef struct
+{
+    void (*callbackMain)();
+    void (*threadMain)(void *a, ...);
+    qboolean isActive;
+    qboolean lock;
+    void *callback_args[MAX_PLUGINCALLBACKARGS];
+    void *thread_args[MAX_PLUGINCALLBACKARGS];
+    threadid_t tid;
+} plugin_thread_callback_t;
 
-
-typedef struct{
-    int (*OnInit)();            // Initialization function
-    void (*OnInfoRequest)();    // Info gathering function
-
-    void (*OnEvent[PLUGINS_ITEMCOUNT])();
-    void (*OnUnload)();    // De-initialization function
+typedef struct
+{
+    void (*OnEvent[PLUGINS_EVENTS_COUNT])();
 
     pluginCmd_t cmd[20];
     int cmds;
@@ -166,23 +169,23 @@ typedef struct{
 
     /* Callback thread control */
     plugin_thread_callback_t thread_callbacks[MAX_PLUGINCALLBACKS];
-}plugin_t;
+} plugin_t;
 
-typedef struct{
+typedef struct
+{
     plugin_t plugins[MAX_PLUGINS];
-    int loadedPlugins;
+    int loadedPlugins; // required? Load A, B, C, D - unload B - count == 3 but can not be used to iterate.
     qboolean enabled;
     qboolean initializing_plugin;
     int hasControl;
-}pluginWrapper_t;
+} pluginWrapper_t;
 
 #define MAX_SCRIPTFUNCTIONS 64
 
-typedef union
-{
-	byte pad[MAX_SCRIPTFUNCTIONS * MAX_PLUGINS * 64];
-	pluginScriptCmd_t s[MAX_SCRIPTFUNCTIONS * MAX_PLUGINS];
-}__attribute__((aligned (4096))) pluginScriptCallStubBase_t;
+typedef union {
+    byte pad[MAX_SCRIPTFUNCTIONS * MAX_PLUGINS * 64];
+    pluginScriptCmd_t s[MAX_SCRIPTFUNCTIONS * MAX_PLUGINS];
+} __attribute__((aligned(4096))) pluginScriptCallStubBase_t;
 
 extern pluginWrapper_t pluginFunctions; // defined in plugin_handler.c
 extern pluginScriptCallStubBase_t pluginScriptCallStubs;
@@ -190,33 +193,33 @@ extern pluginScriptCallStubBase_t pluginScriptCallStubs;
 // --------------------------------//
 //  Plugin Handler's own functions //
 // --------------------------------//
-void PHandler_Load(char* );
+void PHandler_Load(char *);
 void PHandler_Unload(int id);
-void PHandler_UnloadByName(char *name);
-int PHandler_GetID(char *name);
-void PHandler_Event(int, ...);
+void PHandler_UnloadByName(const char *name);
+int PHandler_GetID(const char *name);
+void PHandler_Event(PluginEvents Event_, ...);
 void PHandler_Init();
-void *PHandler_Malloc(int,size_t);
-void PHandler_Free(int,void *);
+void *PHandler_Malloc(int, size_t);
+void PHandler_Free(int, void *);
 void PHandler_FreeAll(int);
-void PHandler_Error(int,int, char *);
-qboolean PHandler_TcpConnect(int,const char *,int);
-int PHandler_TcpGetData(int, int, void*, int);
-int PHandler_TcpSendData(int,int, void*, int);
-void PHandler_TcpCloseConnection(int,int);
+void PHandler_Error(int, int, char *);
+qboolean PHandler_TcpConnect(int, const char *, int);
+int PHandler_TcpGetData(int, int, void *, int);
+int PHandler_TcpSendData(int, int, void *, int);
+void PHandler_TcpCloseConnection(int, int);
 int PHandler_CallerID();
-void PHandler_ChatPrintf(int,char *,...);
-void PHandler_CmdExecute_f( void ); // fake server command for use in plugin commands
+void PHandler_ChatPrintf(int, char *, ...);
+void PHandler_CmdExecute_f(void); // fake server command for use in plugin commands
 void PHandler_ScrAddMethod(char *name, xfunction_t function, qboolean replace, int pID);
 void PHandler_ScrAddFunction(char *name, xfunction_t function, qboolean replace, int pID);
 // --------------------------------------//
 //  Plugin Handler's own server commands //
 // --------------------------------------//
 
-void PHandler_LoadPlugin_f( void );
-void PHandler_UnLoadPlugin_f( void );
-void PHandler_PluginList_f( void );
-void PHandler_PluginInfo_f( void );
+void PHandler_LoadPlugin_f(void);
+void PHandler_UnLoadPlugin_f(void);
+void PHandler_PluginList_f(void);
+void PHandler_PluginInfo_f(void);
 void Plugin_RunThreadCallbacks();
 
 /*

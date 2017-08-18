@@ -36,11 +36,12 @@
 
 #include "q_shared.h"
 #include "q_math.h"
-#include "entity.h"
+#include "gentity.h"
 #include "player.h"
 #include "g_hud.h"
 #include "filesystem.h"
 #include "g_sv_shared.h"
+#include "g_entity.h"
 
 typedef struct{
 	short   emptystring;
@@ -477,7 +478,6 @@ typedef struct
 
 #pragma pack(pop)
 
-
 void __cdecl Scr_InitVariables(void);			//VM
 void __cdecl Scr_Init(void);			//VM_Init
 void __cdecl Scr_Settings(int, int, int);
@@ -534,12 +534,15 @@ void __cdecl Scr_MakeArray( void );
 void __cdecl Scr_AddArrayKey( int strIdx );
 void __cdecl Scr_Notify( gentity_t*, unsigned short, unsigned int);
 void __cdecl Scr_NotifyNum( int, unsigned int, unsigned int, unsigned int);
+void __cdecl Scr_NotifyLevel(int constString, unsigned int numArgs);
 /*Not working :(  */
 void __cdecl Scr_PrintPrevCodePos( int printDest, const char* pos, qboolean unk2 );
-int __cdecl Scr_GetFunctionHandle( const char* scriptName, const char* labelName);
-short __cdecl Scr_ExecEntThread( gentity_t* ent, int callbackHook, unsigned int numArgs);
+int __cdecl Scr_GetFunctionHandle(const char *scriptName, const char *labelName);
+short __cdecl Scr_ExecEntThreadNum(scr_entref_t entNum, void *zero, int callbackHook, unsigned int numArgs);
+short __cdecl Scr_ExecEntThread(gentity_t *ent, int callbackHook, unsigned int numArgs);
 short __cdecl Scr_ExecThread( int callbackHook, unsigned int numArgs);
 void __cdecl Scr_FreeThread( short threadId);
+void __cdecl RemoveRefToObject(unsigned int id);
 unsigned int __cdecl Scr_CreateCanonicalFilename( const char* name );
 //Unknown real returntype
 unsigned int __cdecl FindVariable( unsigned int, unsigned int );
@@ -547,7 +550,7 @@ unsigned int __cdecl FindObject( unsigned int );
 unsigned int __cdecl GetNewVariable( unsigned int, unsigned int );
 void * __cdecl TempMalloc( int );
 void __cdecl ScriptParse( sval_u* , byte);
-unsigned int __cdecl GetObjectA( unsigned int );
+unsigned int __cdecl _GetObjectA( unsigned int ); // This is, actually, name of WinAPI function.
 unsigned int __cdecl GetObject( unsigned int );
 unsigned int __cdecl GetVariable( unsigned int, unsigned int );
 void __cdecl ScriptCompile( sval_u, unsigned int, unsigned int, PrecacheEntry*, int);
@@ -639,4 +642,12 @@ client_t* VM_GetClientForEntityNumber(scr_entref_t num); // Mainly for pressed b
 // Returns pointer to new 'fields_1' array. To be used in patching purposes.
 ent_field_t* __internalGet_fields_1();
 
+void __cdecl Scr_LoadGameType();
+void __cdecl Scr_StartupGameType();
+void __cdecl Scr_PlayerConnect(gentity_t *ent);
+void __cdecl Scr_PlayerDisconnect(gentity_t *ent);
+void __cdecl Scr_PlayerDamage(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int dflags, unsigned int meansOfDeath, int iWeapon, float *vPoint, float *vDir, hitLocation_t hitLoc, int timeOffset);
+void __cdecl Scr_PlayerKilled(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, unsigned int meansOfDeath, int iWeapon, float *vDir, hitLocation_t hitLoc, int psTimeOffset, int deathAnimDuration);
+void __cdecl Scr_PlayerLastStand(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, unsigned int meansOfDeath, int iWeapon, float *vDir, hitLocation_t hitLoc, int psTimeOffset);
+void __cdecl Scr_LoadLevel();
 #endif

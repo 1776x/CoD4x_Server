@@ -23,11 +23,13 @@
 #define G_SHARED_H
 
 #include "filesystem.h"
-#include "entity.h"
+#include "gentity.h"
 #include "player.h"
 #include "cvar.h"
 
 #include "sys_cod4defs.h"
+
+#include "g_entity.h"
 
 #define level_ADDR 0x8370440
 #define level (*((level_locals_t *)(level_ADDR)))

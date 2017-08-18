@@ -18,7 +18,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 ===========================================================================
 */
-
+// Unused
+#if 0
 #include "plugin_crypto.h"
 
 qboolean PHandler_Hash(pluginHash_t algo, void *in, size_t inSize, void *out, size_t outSize){
@@ -48,3 +49,4 @@ qboolean PHandler_Hash(pluginHash_t algo, void *in, size_t inSize, void *out, si
     hs->done(&md,out);
     return qtrue;
 }
+#endif

@@ -27,7 +27,7 @@
 #include <math.h>
 
 #include "msg.h"
-#include "entity.h"
+#include "g_entity.h"
 #include "player.h"
 #include "qcommon_io.h"
 #include "net_game_conf.h"

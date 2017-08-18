@@ -19,12 +19,18 @@
 ===========================================================================
 */
 
+#if !defined _FUNCTION_DECLARATION_H_
+#define _FUNCTION_DECLARATION_H_
 
 #ifndef PLUGIN_INCLUDES
+#error Please include pinc.h instead!
+#endif
 
-    #error Please include pinc.h instead!
-
-#endif /*PLUGIN_INCLUDES*/
+#include "../src/server.h"
+#include "../src/cmd.h"
+#include "../src/scr_vm_functions.h"
+#include "../src/httpftp.h"
+#include "../src/sys_thread.h"
 
     // ----------------------------------------------------------------------------//
     // Functions available for use in plugin API, sorted alphabetically by module. //
@@ -361,3 +367,5 @@
     __cdecl void Plugin_SleepMSec(int msec);
     __cdecl void Plugin_SetStat(int clientNum, signed int index, int value);
     __cdecl int Plugin_GetStat(int clientNum, signed int index);
+
+#endif // _FUNCTION_DECLARATION_H_

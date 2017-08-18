@@ -21,7 +21,7 @@
 
 
 #include "qcommon_io.h"
-#include "entity.h"
+#include "gentity.h"
 #include "player.h"
 #include "cvar.h"
 #include "server.h"

@@ -83,45 +83,6 @@ int Com_IsDeveloper();
 qboolean Com_LoadBinaryImage();
 
 void Com_SyncThreads();
-
-#define MAXPRINTMSG 4096
-#define	MAX_RELIABLE_COMMANDS	128	// max string commands buffered for restransmit
-#define MAX_DOWNLOAD_WINDOW	8	// max of eight download frames
-#define MAX_DOWNLOAD_BLKSIZE	2048	// 2048 byte block chunks
-#define MAX_PACKET_USERCMDS	32
-
-#define	PACKET_BACKUP		32
-#define PACKET_MASK ( PACKET_BACKUP - 1 )
-
-
-
-#define Q3CONFIG_CFG "q3config_server.cfg"
-
-
-#define cod4xpem "-----BEGIN PUBLIC KEY-----\n\
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwu8nEsLD4sTP+Py30Fnq\n\
-UOlgZZrGb7aIiQhn8iXAXXuhLC0pKOQ2drq3KWMbHeiNSAaxI2TGRirYCiZETnkX\n\
-WCt0NxvrGtbvbsDHBaVju/5X9CiyJBFr+YFhZ8RK/UH8KxMqIAlvN5f3H30rPqwB\n\
-QlI+scIXp5ZrFt97zaYw4czpWod4iZVm4O8fNJJAFq9qR2yxVyKaP7DZr3wZEt1+\n\
-WJrOmkWPYkNC/YC1qnY35ubDAS7vZPvPtmw4oeJKSsTFwR5ddKMiLvPzRW3KgpT1\n\
-B4zHBTO1xOKTYvEQqJqspz1ELUeSPemEYmZEZdakVLDKyzPZ5+a0WR4q3pDtmrZG\n\
-KwIDAQAB\n\
------END PUBLIC KEY-----"
-
-
-
-typedef struct
-{
-  byte bytedata[2000];
-  int longdata[1547];
-}statData_t;
-
-typedef struct
-{
-  int checksum;
-  statData_t data;
-}stats_t;
-
 void Com_LoadWorld(const char *name);
 void CM_LinkWorld();
 void CM_LoadMap(const char *name, int *checksum);

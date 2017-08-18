@@ -22,7 +22,7 @@
 
 #include "q_shared.h"
 #include "cvar.h"
-#include "entity.h"
+#include "gentity.h"
 #include "player.h"
 #include "g_sv_shared.h"
 #include "g_shared.h"

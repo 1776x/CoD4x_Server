@@ -19,14 +19,12 @@
 ===========================================================================
 */
 
-
-
 #include "plugin_handler.h"
 #include "q_platform.h"
 #include "sys_main.h"
 #include "objfile_parser.h"
 #include "sec_crypto.h"
-
+ 
 /*=========================================*
  *                                         *
  *       Plugin Handler's main file        *
@@ -38,51 +36,17 @@
  *                                         *
  *=========================================*/
 
-
 pluginWrapper_t pluginFunctions;
 pluginScriptCallStubBase_t __attribute__((section(".text#"))) pluginScriptCallStubs;
 
-
-char PHandler_Events[PLUGINS_ITEMCOUNT][32]={
-
-    "OnInfoRequest",
-    "OnPlayerDC",
-    "OnPlayerConnect",
-    "OnExitLevel",
-    "OnMessageSent",
-    "OnFrame",
-    "OnOneSecond",
-    "OnTenSeconds",
-    "OnClientAuthorized",
-    "OnClientSpawn",
-    "OnClientEnterWorld",
-    "OnTcpServerPacket",
-    "OnUdpNetEvent",
-    "OnUdpNetSend",
-    "OnSpawnServer",
-    "OnPreFastRestart",
-    "OnPostFastRestart",
-    "OnClientUserinfoChanged",
-    "OnClientMoveCommand",
-    "OnPlayerWantReservedSlot",
-    "OnFilesystemStarted",
-    "OnPlayerGotAuthInfo",
-    "OnPlayerAddBan",
-    "OnPlayerGetBanStatus",
-    "OnPlayerRemoveBan",
-    "OnModuleLoaded",
-    "OnScreenshotArrived",
-    "OnTerminate"
-};
-
 void PHandler_Init() // Initialize the Plugin Handler's data structures and add commands
 {
-    pluginFunctions.loadedPlugins=0;
-    pluginFunctions.enabled=qfalse;
+    pluginFunctions.loadedPlugins = 0;
+    pluginFunctions.enabled = qfalse;
     pluginFunctions.hasControl = PLUGIN_UNKNOWN;
 
-    memset(&pluginFunctions,0x00,sizeof(pluginFunctions));    // 0 all data
-    pluginFunctions.enabled=qtrue;
+    memset(&pluginFunctions, 0x00, sizeof(pluginFunctions)); // 0 all data
+    pluginFunctions.enabled = qtrue;
 
     Cmd_AddCommand("loadPlugin", PHandler_LoadPlugin_f);
     Cmd_AddCommand("unloadPlugin", PHandler_UnLoadPlugin_f);
@@ -92,22 +56,22 @@ void PHandler_Init() // Initialize the Plugin Handler's data structures and add 
     Com_Printf("-------- Plugins initialization completed --------\n");
 }
 
-qboolean PHandler_VerifyPlugin(void* buf, int len)
+qboolean PHandler_VerifyPlugin(void *buf, int len)
 {
-	int i;
-	char **strings;
-	char *curstring;
-	sharedlib_data_t text;
+    int i;
+    char **strings;
+    char *curstring;
+    sharedlib_data_t text;
 
-
-	//Parse the pluginfile and extract function names string table
+    //Parse the pluginfile and extract function names string table
     strings = GetStrTable(buf, len, &text);
-    if(strings == NULL){
+    if (strings == NULL)
+    {
         return qfalse;
     }
     Com_DPrintf("Parsing plugin function names...\n");
 
-    for(i = 0, curstring = strings[i] ; curstring != NULL; i++, curstring = strings[i])
+    for (i = 0, curstring = strings[i]; curstring != NULL; i++, curstring = strings[i])
     {
         /*
 		if(strcmp(curstring,"malloc")==0 || strcmp(curstring,"calloc")==0 || strcmp(curstring,"realloc")==0 ||
@@ -126,79 +90,76 @@ qboolean PHandler_VerifyPlugin(void* buf, int len)
     }
     free(strings);
     Com_DPrintf("Done parsing plugin function names.\n");
-	return qtrue;
+    return qtrue;
 }
 
-const char* PHandler_OpenTempFile(char* name, char* fullfilepath, int fplen){ // Load a plugin, safe for use
+const char *PHandler_OpenTempFile(char *name, char *fullfilepath, int fplen)
+{ // Load a plugin, safe for use
 
     void *buf;
     int len;
     int wlen;
-    char* file;
+    char *file;
     char tmpfile[MAX_QPATH];
     char filepath[MAX_QPATH];
 
-    Com_sprintf(filepath, sizeof(filepath),"plugins/%s" DLL_EXT, name);
+    Com_sprintf(filepath, sizeof(filepath), "plugins/%s" DLL_EXT, name);
 
     len = FS_SV_ReadFile(filepath, &buf);
 
-    if(len < 100)
-        len = FS_ReadFile( filepath, &buf );
+    if (len < 100)
+        len = FS_ReadFile(filepath, &buf);
 
-    if(len < 100)
+    if (len < 100)
     {
         Com_Printf("No such file found: %s. Can not load this plugin.\n", filepath);
         return NULL;
-
     }
 
-	if(PHandler_VerifyPlugin(buf, len) == qfalse)
-	{
-	    Com_Printf("%s is not a plugin file or is corrupt or contains disallowed functions.\n", filepath);
-		FS_FreeFile(buf);
-		return NULL;
-	}
-	Com_sprintf(tmpfile, sizeof(tmpfile), "plugin.%s.tmp", name);
+    if (PHandler_VerifyPlugin(buf, len) == qfalse)
+    {
+        Com_Printf("%s is not a plugin file or is corrupt or contains disallowed functions.\n", filepath);
+        FS_FreeFile(buf);
+        return NULL;
+    }
+    Com_sprintf(tmpfile, sizeof(tmpfile), "plugin.%s.tmp", name);
     /* If there is already such a file remove it now */
-    file = FS_SV_GetFilepath( tmpfile, fullfilepath, fplen );
-    if(file)
+    file = FS_SV_GetFilepath(tmpfile, fullfilepath, fplen);
+    if (file)
     {
         FS_RemoveOSPath(file);
-        file = FS_SV_GetFilepath( tmpfile, fullfilepath, fplen );
-        if(file)
+        file = FS_SV_GetFilepath(tmpfile, fullfilepath, fplen);
+        if (file)
         {
             FS_RemoveOSPath(file);
         }
     }
-    wlen = FS_SV_HomeWriteFile( tmpfile, buf, len);
-    if(wlen != len)
+    wlen = FS_SV_HomeWriteFile(tmpfile, buf, len);
+    if (wlen != len)
     {
-            Com_PrintError("fs_homepath is readonly. Can not load this plugin.\n");
-            FS_FreeFile(buf);
-            return NULL;
+        Com_PrintError("fs_homepath is readonly. Can not load this plugin.\n");
+        FS_FreeFile(buf);
+        return NULL;
     }
     //Additional test if a file is there and creation of full filepath
     FS_FreeFile(buf);
-    return FS_SV_GetFilepath( tmpfile, fullfilepath, fplen );
+    return FS_SV_GetFilepath(tmpfile, fullfilepath, fplen);
 }
 
-
-void PHandler_CloseTempFile(char* filepath)
+void PHandler_CloseTempFile(char *filepath)
 {
-    if(!com_developer || com_developer->integer == 0)
+    if (!com_developer || com_developer->integer == 0)
         FS_RemoveOSPath(filepath);
 }
-
 
 #define PLUGINCENSOR_HASH "bfb496df0acc1bd01a0789b8d35d8081143db883297206aa"
 #define PLUGINANTISPAM_HASH "7fc95f3902bd809a1e50a783fbb482044f67ad8927259a36"
 #define PLUGINGAMERANGER_HASH "6609a69715a41b486611fa1c461f90acfed836eac0e699d8"
 
-
-void PHandler_Load(char* name) // Load a plugin, safe for use
+void PHandler_Load(char *name) // Load a plugin, safe for use
 {
-    int i,j;
-    char* realpath;
+    int i;
+    char *realpath;
     char filepathbuf[MAX_OSPATH];
     char hash[128];
     long unsigned sizeofhash;
@@ -206,24 +167,28 @@ void PHandler_Load(char* name) // Load a plugin, safe for use
 
     pluginInfo_t info;
 
-    if(!pluginFunctions.enabled){
+    if (!pluginFunctions.enabled)
+    {
         Com_Printf("Plugin handler is not initialized!\n");
         return;
-
     }
-    if(pluginFunctions.loadedPlugins>=MAX_PLUGINS-1){
+    if (pluginFunctions.loadedPlugins >= MAX_PLUGINS - 1)
+    {
         Com_Printf("Too many plugins loaded.");
         return;
     }
     /* +18 for "plugins/%s.dynlib" */
-    if(strlen(name) + 18 >= sizeof(pluginFunctions.plugins[0].name)){
+    if (strlen(name) + 18 >= sizeof(pluginFunctions.plugins[0].name))
+    {
         Com_Printf("Pluginname is too long.");
         return;
     }
     Com_DPrintf("Checking if the plugin is not already loaded...\n");
     //    Check if the plugin is not already loaded...
-    for(i=0;i<MAX_PLUGINS;i++){
-        if(Q_stricmp(name, pluginFunctions.plugins[i].name) == qfalse){
+    for (i = 0; i < MAX_PLUGINS; i++)
+    {
+        if (Q_stricmp(name, pluginFunctions.plugins[i].name) == qfalse)
+        {
             Com_Printf("This plugin is already loaded!\n");
             return;
         }
@@ -231,68 +196,65 @@ void PHandler_Load(char* name) // Load a plugin, safe for use
     Com_DPrintf("Checking if the plugin file exists and is of correct format...\n");
 
     //Additional test if a file is there
-    realpath = (char*)PHandler_OpenTempFile(name, filepathbuf, sizeof(filepathbuf)); // Load a plugin, safe for use
-    if(realpath == NULL)
+    realpath = (char *)PHandler_OpenTempFile(name, filepathbuf, sizeof(filepathbuf)); // Load a plugin, safe for use
+    if (realpath == NULL)
     {
         return;
     }
 
-    Com_DPrintf("Loading the plugin .so...\n");
+    Com_DPrintf("Loading the plugin "DLL_EXT"...\n");
 
-
-    if(com_securemode)
+    if (com_securemode)
     {
-	hash[0] = '\0';
-	sizeofhash = sizeof(hash);
+        hash[0] = '\0';
+        sizeofhash = sizeof(hash);
 
-	Sec_HashFile(SEC_HASH_TIGER, realpath, hash, &sizeofhash, qfalse);
+        Sec_HashFile(SEC_HASH_TIGER, realpath, hash, &sizeofhash, qfalse);
 
-	if(Q_stricmp(hash ,PLUGINGAMERANGER_HASH) && Q_stricmp(hash ,PLUGINCENSOR_HASH) && Q_stricmp(hash ,PLUGINANTISPAM_HASH))
-	{
-		Com_Printf("Tiger = %s\n", hash);
-		Com_PrintError("%s checksum missmatch! This plugin will not be loaded in securemode.\n", realpath);
-		return;
-	}
-
+        if (Q_stricmp(hash, PLUGINGAMERANGER_HASH) && Q_stricmp(hash, PLUGINCENSOR_HASH) && Q_stricmp(hash, PLUGINANTISPAM_HASH))
+        {
+            Com_Printf("Tiger = %s\n", hash);
+            Com_PrintError("%s checksum missmatch! This plugin will not be loaded in securemode.\n", realpath);
+            return;
+        }
     }
 
     lib_handle = Sys_LoadLibrary(realpath);
     if (!lib_handle)
-	{
+    {
         Com_PrintError("Failed to load the plugin %s!\n", realpath);
-        PHandler_CloseTempFile( realpath );
+        PHandler_CloseTempFile(realpath);
         return;
     }
-    PHandler_CloseTempFile( realpath );
+    PHandler_CloseTempFile(realpath);
     Com_DPrintf("Plugin OK! Loading...\n");
     // find first free plugin slot
-    for(i=0;i<MAX_PLUGINS;i++){
-        if(!(pluginFunctions.plugins[i].loaded))
+    for (i = 0; i < MAX_PLUGINS; i++)
+    {
+        if (!(pluginFunctions.plugins[i].loaded))
             break;
     }
-    
+
     if (i == MAX_PLUGINS)
     {
         Com_PrintError("Maximum %d plugins exceeded", MAX_PLUGINS);
         return;
     }
 
-    pluginFunctions.plugins[i].OnInit = Sys_GetProcedure("OnInit");
-    for(j=0;j<PLUGINS_ITEMCOUNT;++j){
-        pluginFunctions.plugins[i].OnEvent[j] = Sys_GetProcedure(PHandler_Events[j]);
+    // Loading plugin events procedures.
+    for (PluginEvents ev = PLUGINS_EVENTS_START; ev < PLUGINS_EVENTS_COUNT; ++ev)
+        pluginFunctions.plugins[i].OnEvent[ev] = Sys_GetProcedure(GetEventName(ev));
 
-    }
-    pluginFunctions.plugins[i].OnInfoRequest = pluginFunctions.plugins[i].OnEvent[PLUGINS_ONINFOREQUEST];
-    pluginFunctions.plugins[i].OnUnload = Sys_GetProcedure("OnUnload");
     pluginFunctions.plugins[i].loaded = qtrue;
     pluginFunctions.plugins[i].enabled = qtrue;
     Q_strncpyz(pluginFunctions.plugins[i].name, name, sizeof(pluginFunctions.plugins[i].name));
     pluginFunctions.initializing_plugin = qtrue;
 
-    if(pluginFunctions.plugins[i].OnInit==NULL){
+    if (pluginFunctions.plugins[i].OnEvent[PLUGINS_ONINIT] == NULL)
+    {
         Com_Printf("Error loading plugin's OnInit function.\nPlugin load failed.\n");
         pluginFunctions.initializing_plugin = qfalse;
-        memset(pluginFunctions.plugins + i,0x00,sizeof(plugin_t));    // We need to remove all references so we can dlclose.
+        memset(pluginFunctions.plugins + i, 0x00, sizeof(plugin_t)); // We need to remove all references so we can dlclose.
         Sys_CloseLibrary(lib_handle);
         return;
     }
@@ -303,43 +265,43 @@ void PHandler_Load(char* name) // Load a plugin, safe for use
     pluginFunctions.loadedPlugins++;
     pluginFunctions.plugins[i].lib_handle = lib_handle;
 
-    if(pluginFunctions.plugins[i].OnInfoRequest){
+    if (pluginFunctions.plugins[i].OnEvent[PLUGINS_ONINFOREQUEST])
+    {
         Com_DPrintf("Fetching plugin information...\n");
         pluginFunctions.hasControl = i;
-        (*pluginFunctions.plugins[i].OnInfoRequest)(&info);
+        (*pluginFunctions.plugins[i].OnEvent[PLUGINS_ONINFOREQUEST])(&info);
         pluginFunctions.hasControl = PLUGIN_UNKNOWN;
 
-        if(info.handlerVersion.major != PLUGIN_HANDLER_VERSION_MAJOR || (info.handlerVersion.minor - info.handlerVersion.minor %100) != (PLUGIN_HANDLER_VERSION_MINOR - PLUGIN_HANDLER_VERSION_MINOR %100))
-	{
-            Com_PrintError("This plugin might not be compatible with this server version! Requested plugin handler version: %d.%d, server's plugin handler version: %d.%d. Unloading the plugin...\n",info.handlerVersion.major,info.handlerVersion.minor, PLUGIN_HANDLER_VERSION_MAJOR,PLUGIN_HANDLER_VERSION_MINOR);
+        if (info.handlerVersion.major != PLUGIN_HANDLER_VERSION_MAJOR || (info.handlerVersion.minor - info.handlerVersion.minor % 100) != (PLUGIN_HANDLER_VERSION_MINOR - PLUGIN_HANDLER_VERSION_MINOR % 100))
+        {
+            Com_PrintError("This plugin might not be compatible with this server version! Requested plugin handler version: %d.%d, server's plugin handler version: %d.%d. Unloading the plugin...\n", info.handlerVersion.major, info.handlerVersion.minor, PLUGIN_HANDLER_VERSION_MAJOR, PLUGIN_HANDLER_VERSION_MINOR);
             PHandler_Unload(i);
             return;
         }
-
-    }else{
+    }
+    else
+    {
 
         Com_PrintError("function OnInfoRequest not found in the plugin file. Unloading...\n");
         PHandler_Unload(i);
         return;
-
     }
 
     Com_DPrintf("Executing plugin's OnInit...\n");
 
     pluginFunctions.hasControl = i;
-    if((*pluginFunctions.plugins[i].OnInit)()<0)
+    if (((int(*)())pluginFunctions.plugins[i].OnEvent[PLUGINS_ONINIT])() < 0)
     {
         pluginFunctions.hasControl = PLUGIN_UNKNOWN;
         Com_Printf("Error in plugin's OnInit function!\nPlugin load failed.\n");
         pluginFunctions.initializing_plugin = qfalse;
-        memset(pluginFunctions.plugins + i,0x00,sizeof(plugin_t));    // We need to remove all references so we can dlclose.
+        memset(pluginFunctions.plugins + i, 0x00, sizeof(plugin_t)); // We need to remove all references so we can dlclose.
         Sys_CloseLibrary(lib_handle);
         return;
     }
 
-    Com_Printf("Plugin %s loaded successfully. Server is currently running %d plugins.\n",pluginFunctions.plugins[i].name,pluginFunctions.loadedPlugins);
+    Com_Printf("Plugin %s loaded successfully. Server is currently running %d plugins.\n", pluginFunctions.plugins[i].name, pluginFunctions.loadedPlugins);
     return;
-
 }
 
 void PHandler_Unload(int id) // Unload a plugin, safe for use.
@@ -348,99 +310,107 @@ void PHandler_Unload(int id) // Unload a plugin, safe for use.
     void *lib_handle;
     int i;
 
-    if(unloading){
-	Com_PrintError("PHandler_Unload: tried to unload plugin #%d from it's destructor!\n",id);
-	return;
+    if (unloading)
+    {
+        Com_PrintError("PHandler_Unload: tried to unload plugin #%d from it's destructor!\n", id);
+        return;
     }
 
-
-    if(pluginFunctions.plugins[id].loaded){
-        if(pluginFunctions.plugins[id].exports != 0){ // Library-plugins cannot be unloaded, see plugins/readme.txt
-            Com_PrintError("PHandler_Unload: Cannot unload a library plugin!\n");
-            return;
-        }
-        if(pluginFunctions.plugins[id].scriptfunctions != 0 || pluginFunctions.plugins[id].scriptmethods != 0){
-            // Script-library plugins cannot be unloaded, see plugins/readme.txt
-            Com_PrintError("PHandler_Unload: Cannot unload a script-library plugin!\n");
-            return;
-        }
-        unloading = qtrue; // Preventing endless recursion...
-        if(pluginFunctions.plugins[id].OnUnload != NULL){
-            pluginFunctions.hasControl = id;
-            (*pluginFunctions.plugins[id].OnUnload)();
-            pluginFunctions.hasControl = PLUGIN_UNKNOWN;
-        }
-        unloading = qfalse;
-        // Remove all server commands of the plugin
-        for(i=0;i<pluginFunctions.plugins[id].cmds;i++){
-            if(pluginFunctions.plugins[id].cmd[i].xcommand!=NULL){
-                Com_DPrintf("Removing command \"%s\"...\n",pluginFunctions.plugins[id].cmd[i].name);
-                Cmd_RemoveCommand(pluginFunctions.plugins[id].cmd[i].name);
-            }
-
-        }
-        lib_handle = pluginFunctions.plugins[id].lib_handle;                // Save the lib handle
-        Com_Memset(&(pluginFunctions.plugins[id]), 0x00, sizeof(plugin_t));     // Wipe out all the data
-        Sys_CloseLibrary(lib_handle);                                                // Close the dll as there are no more references to it
-        --pluginFunctions.loadedPlugins;
-    }else{
-        Com_Printf("Tried unloading a not loaded plugin!\nPlugin ID: %d.",id);
+    if (!pluginFunctions.plugins[id].loaded)
+    {
+        Com_Printf("Tried unloading a not loaded plugin!\nPlugin ID: %d.", id);
+        return;
     }
+
+    if (pluginFunctions.plugins[id].exports != 0)
+    { // Library-plugins cannot be unloaded, see plugins/readme.txt
+        Com_PrintError("PHandler_Unload: Cannot unload a library plugin!\n");
+        return;
+    }
+    if (pluginFunctions.plugins[id].scriptfunctions != 0 || pluginFunctions.plugins[id].scriptmethods != 0)
+    {
+        // Script-library plugins cannot be unloaded, see plugins/readme.txt
+        Com_PrintError("PHandler_Unload: Cannot unload a script-library plugin!\n");
+        return;
+    }
+    unloading = qtrue; // Preventing endless recursion...
+    if (pluginFunctions.plugins[id].OnEvent[PLUGINS_ONUNLOAD] != NULL)
+    {
+        pluginFunctions.hasControl = id;
+        (*pluginFunctions.plugins[id].OnEvent[PLUGINS_ONUNLOAD])();
+        pluginFunctions.hasControl = PLUGIN_UNKNOWN;
+    }
+    unloading = qfalse;
+    // Remove all server commands of the plugin
+    for (i = 0; i < pluginFunctions.plugins[id].cmds; i++)
+    {
+        if (pluginFunctions.plugins[id].cmd[i].xcommand != NULL)
+        {
+            Com_DPrintf("Removing command \"%s\"...\n", pluginFunctions.plugins[id].cmd[i].name);
+            Cmd_RemoveCommand(pluginFunctions.plugins[id].cmd[i].name);
+        }
+    }
+    lib_handle = pluginFunctions.plugins[id].lib_handle;                // Save the lib handle
+    Com_Memset(&(pluginFunctions.plugins[id]), 0x00, sizeof(plugin_t)); // Wipe out all the data
+    Sys_CloseLibrary(lib_handle);                                       // Close the dll as there are no more references to it
+    --pluginFunctions.loadedPlugins;
 }
-int PHandler_GetID(char *name) // Get ID of a plugin by name, safe for use
+
+int PHandler_GetID(const char *name) // Get ID of a plugin by name, safe for use
 {
-    int i;
-    for(i=0;i<MAX_PLUGINS;i++){
-        if(strcmp(name,pluginFunctions.plugins[i].name)==0){
+    for (int i = 0; i < MAX_PLUGINS; ++i)
+        if (!Q_stricmp(name, pluginFunctions.plugins[i].name))
             return i;
-        }
-    }
+
     return PLUGIN_UNKNOWN;
 }
 
-
-void PHandler_UnloadByName(char *name) // Unload a plugin, safe for use
+void PHandler_UnloadByName(const char *name) // Unload a plugin, safe for use
 {
     int id = PHandler_GetID(name);
-    if(id<0)
-        Com_Printf("Cannot unload plugin: plugin %s is not loaded!\n",name);
-    else{
-        Com_Printf("Unloading plugin %s, plugin id: %d.\n",name,id);
-        PHandler_Unload(id);
-
+    if (id < 0)
+    {
+        Com_Printf("Plugin '%s' is not loaded!\n", name);
+        return;
     }
+
+    Com_Printf("Unloading plugin '%s' [%d]\n", name, id);
+    PHandler_Unload(id);
 }
 
-
-void PHandler_Event(int eventID,...) // Fire a plugin event, safe for use
+void PHandler_Event(PluginEvents Event_, ...) // Fire a plugin event, safe for use
 {
-    int i=0;
+    if (!pluginFunctions.enabled)
+        return;
 
-    if(!pluginFunctions.enabled)
-            return;
-
-    if(eventID < 0 || eventID >= PLUGINS_ITEMCOUNT){
-        Com_DPrintf("Plugins: unknown event occured! Event ID: %d.\n",eventID);
+    if (Event_ < PLUGINS_EVENTS_START || Event_ >= PLUGINS_EVENTS_COUNT)
+    {
+        Com_DPrintf("Plugins: unknown event occured! Event ID: %d.\n", Event_);
         return;
     }
 
     va_list argptr;
 
-    va_start(argptr, eventID);
-    void *arg_0 = va_arg(argptr, void*);
-    void *arg_1 = va_arg(argptr, void*);
-    void *arg_2 = va_arg(argptr, void*);
-    void *arg_3 = va_arg(argptr, void*);
-    void *arg_4 = va_arg(argptr, void*);
-    void *arg_5 = va_arg(argptr, void*);
+    va_start(argptr, Event_);
+    void *arg_0 = va_arg(argptr, void *);
+    void *arg_1 = va_arg(argptr, void *);
+    void *arg_2 = va_arg(argptr, void *);
+    void *arg_3 = va_arg(argptr, void *);
+    void *arg_4 = va_arg(argptr, void *);
+    void *arg_5 = va_arg(argptr, void *);
 
     va_end(argptr);
 
-    for(i=0;i < pluginFunctions.loadedPlugins; i++){
-        if(pluginFunctions.plugins[i].OnEvent[eventID]!= NULL){
+    for (int i = 0; i < MAX_PLUGINS; i++)
+    {
+        if (!pluginFunctions.plugins[i].loaded || !pluginFunctions.plugins[i].enabled)
+            continue;
+
+        if (pluginFunctions.plugins[i].OnEvent[Event_])
+        {
             pluginFunctions.hasControl = i;
-            (*pluginFunctions.plugins[i].OnEvent[eventID])(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5);
-    	    pluginFunctions.hasControl = PLUGIN_UNKNOWN;
+            (*pluginFunctions.plugins[i].OnEvent[Event_])(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5);
+            pluginFunctions.hasControl = PLUGIN_UNKNOWN;
         }
     }
 }

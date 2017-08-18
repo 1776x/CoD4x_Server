@@ -81,7 +81,7 @@ Sys_Milliseconds
 
 unsigned int sys_timeBase;
 
-unsigned int Sys_Milliseconds( void )
+unsigned int Sys_Milliseconds()
 {
 	struct timeval tp;
 

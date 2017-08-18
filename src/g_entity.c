@@ -1,6 +1,7 @@
 #include "q_shared.h"
-#include "entity.h"
+#include "gentity.h"
 #include "g_shared.h"
+#include "g_entity.h"
 #include "scr_vm.h"
 
 
@@ -75,3 +76,17 @@ void __cdecl G_VehCollmapSpawner(gentity_t *ent)
 
 }
 
+short G_GetMeansOfDeathString(int MODIdx_)
+{
+    if (MODIdx_ < 0 || MODIdx_ > 15)
+        return 0;
+
+    return (&stringIndex.MOD_UNKNOWN)[MODIdx_];
+}
+
+#define g_HitLocConstNames ((short*)0x08370400)
+
+short G_GetHitLocationString(hitLocation_t HitLoc_)
+{
+    return g_HitLocConstNames[HitLoc_];
+}

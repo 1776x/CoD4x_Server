@@ -70,7 +70,7 @@ PCL void OnMessageSent(char *message,int slot, qboolean *show, int type){
 		data.players[slot].messages[i] = 0;
 	    }
 	}
-	Plugin_ChatPrintf(slot,"Debug: %d, %d, %d, %d.\n",j,i,data.maxMPM->integer,data.maxMPM->latchedinteger);
+	Plugin_ChatPrintf(slot,"Debug: %d, %d, %d, %d.\n",j,i,data.maxMPM->integer,data.maxMPM->latchedInteger);
 	for(i=j;i<ANTISPAM_MAXMESSAGES;++i){
 	    data.players[slot].messages[i] = 0;
 	}

@@ -155,22 +155,6 @@ global Scr_PrintPrevCodePos
 Scr_PrintPrevCodePos:
 	jmp dword [oScr_PrintPrevCodePos]
 
-global Scr_GetFunctionHandle
-Scr_GetFunctionHandle:
-	jmp dword [oScr_GetFunctionHandle]
-
-global Scr_ExecEntThread
-Scr_ExecEntThread:
-	jmp dword [oScr_ExecEntThread]
-
-global Scr_ExecThread
-Scr_ExecThread:
-	jmp dword [oScr_ExecThread]
-
-global Scr_FreeThread
-Scr_FreeThread:
-	jmp dword [oScr_FreeThread]
-
 global Scr_CreateCanonicalFilename
 Scr_CreateCanonicalFilename:
 	jmp dword [oScr_CreateCanonicalFilename]
@@ -191,8 +175,8 @@ global ScriptParse
 ScriptParse:
 	jmp dword [oScriptParse]
 
-global GetObjectA
-GetObjectA:
+global _GetObjectA
+_GetObjectA:
 	jmp dword [oGetObjectA]
 
 global GetVariable
@@ -313,10 +297,6 @@ oScr_AddArrayKey dd 0x0815D0B8
 oScr_Notify dd 0x80c7604
 oScr_NotifyNum dd 0x815e762
 oScr_PrintPrevCodePos dd 0x814ef6e
-oScr_GetFunctionHandle dd 0x814c1b4
-oScr_ExecEntThread dd 0x80c765c
-oScr_ExecThread dd 0x8165032
-oScr_FreeThread dd 0x815d062
 oScr_CreateCanonicalFilename dd 0x81516ee
 oFindVariable dd 0x81542d4
 oFindObject dd 0x8152294

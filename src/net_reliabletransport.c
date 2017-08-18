@@ -2,7 +2,6 @@
 #include "qcommon.h"
 
 #define MAX_PACKETLEN           1400        // max size of a network packet
-#define MAX_FRAGMENT_SIZE         ( MAX_PACKETLEN - 200 )
 #define DEFAULT_BUFFER_SIZE		32
 
 #include "sys_net.h"

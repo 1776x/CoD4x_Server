@@ -26,7 +26,7 @@
 #include "q_shared.h"
 #include "g_shared.h"
 #include "qcommon_io.h"
-#include "entity.h"
+#include "gentity.h"
 #include "player.h"
 #include "server.h"
 #include "g_sv_shared.h"

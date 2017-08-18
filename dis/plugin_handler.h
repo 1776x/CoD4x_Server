@@ -44,7 +44,7 @@ typedef struct{
     int (*OnInit)();	// Initialization function
     void (*OnInfoRequest)();
 
-	void (*OnEvent[PLUGINS_ITEMCOUNT])();
+	void (*OnEvent[PLUGINS_RUNTIME_COUNT])();
     void (*OnUnload)();	// De-initialization function
 
 	pluginCmd_t cmd[20];

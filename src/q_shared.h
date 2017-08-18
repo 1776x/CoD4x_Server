@@ -44,7 +44,7 @@
 #include <time.h>
 #include <math.h>
 
-
+#include "q_shared_types.h"
 #include "game/def.h"
 
 #ifndef __stdcall
@@ -103,25 +103,8 @@ typedef unsigned short WORD;
 #define HIWORD(a) ((WORD)(((DWORD)(a) >> 16) & 0xFFFF))
 #endif
 
-typedef unsigned char byte;
-typedef enum {qfalse, qtrue}	qboolean;
-
 #define _STRINGIFY(s) #s
 #define STRINGIFY(s) _STRINGIFY(s)
-
-//#define DEVRELEASE
-
-
-#ifndef STDCALL
-#define STDCALL __attribute__((stdcall))
-#endif
-
-#define HOMEPATH_NAME_UNIX ".callofduty4"
-#define HOMEPATH_NAME_WIN		"CallofDuty4"
-#define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
-
-#define	MAX_STRING_TOKENS	1024	// max tokens resulting from Cmd_TokenizeString
-#define	MAX_STRING_CHARS	1024
 
 #ifndef Q_vsnprintf
 int Q_vsnprintf(char *s0, size_t size, const char *fmt, va_list args);
@@ -149,32 +132,11 @@ int Q_vsnprintf(char *s0, size_t size, const char *fmt, va_list args);
 #define S_COLOR_MAGENTA	"^6"
 #define S_COLOR_WHITE	"^7"
 
-#define MAX_OSPATH 256
-#define	MAX_INFO_STRING		1024
-#define	MAX_INFO_KEY		1024
-#define	MAX_INFO_VALUE		1024
-#define	MAX_TOKEN_CHARS		1024
-
-#define	MAX_STRING_CHARS	1024	// max length of a string passed to Cmd_TokenizeString
-#define	MAX_NAME_LENGTH		16	// max length of a client name
-#define	MAX_QPATH		64	// max length of a quake game pathname
-
-#define	BIG_INFO_STRING		8192  // used for system info key only
-#define	BIG_INFO_KEY		8192
-#define	BIG_INFO_VALUE		8192
-
-#define TRUNCATE_LENGTH	64
-
 #define LIBRARY_ADDRESS_BY_HANDLE(dlhandle)((NULL == dlhandle) ? NULL :(void*)*(size_t const*)(dlhandle))
 
 #define Com_Memset memset
 #define Com_Memcpy memcpy
 
-
-#define NET_WANT_READ -0x7000
-#define NET_WANT_WRITE -0x7001
-#define NET_CONNRESET -0x7002
-#define NET_ERROR -0x7003
 
 short   ShortSwap (short l);
 short	ShortNoSwap (short l);
@@ -188,8 +150,6 @@ int Q_isalpha( int c );
 qboolean Q_isanumber( const char *s );
 qboolean Q_isintegral( float f );
 qboolean Q_isprintstring( char* s );
-
-typedef int fileHandle_t;
 
 #ifdef _MSC_VER
 int Q_vsnprintf(char *str, size_t size, const char *format, va_list ap);
@@ -348,13 +308,6 @@ void Com_Parse2DMatrix( const char *( *buf_p ), int y, int x, float *m );
 void Com_Parse3DMatrix( const char *( *buf_p ), int z, int y, int x, float *m );
 
 //=====================================================================================
-
-typedef union
-{
-    int i;
-    byte rgba[4];
-}ucolor_t;
-
 
 // parameters to the main Error routine
 typedef enum {
@@ -629,19 +582,20 @@ qboolean Assert_MyHandler(const char* exp, const char *filename, int line, const
 #define ASSERT_HANDLER(x, f, l, fu, ...) (Assert_MyHandler(x, f, l, fu, __VA_ARGS__))
 #define XASSERT(x, ...) (!(x) && ASSERT_HANDLER(#x, __FILE__, __LINE__, __func__, __VA_ARGS__) && (ASSERT_HALT(), 1))
 #define ASSERT(x) XASSERT(x, NULL)
-
+/*
 #ifdef __cplusplus
 #include <cstdlib>
 #define ASSERT_HALT() (std::abort())
 #else
 #define ASSERT_HALT() (abort())
-#endif
+#endif*/
+#define ASSERT_HALT() (abort())
 
 
 #include "q_platform.h"
 #include "q_math.h"
 #include "sys_cod4defs.h"
-#include "entity.h"
+#include "gentity.h"
 
 #endif
 

@@ -18,36 +18,43 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 ===========================================================================
 */
+#if !defined _PLUGIN_DECLARATIONS_H_
+#define _PLUGIN_DECLARATIONS_H_
+
+#include "../src/version.h"
 
 #define PLUGIN_HANDLER_VERSION_MAJOR 3
-#define PLUGIN_HANDLER_VERSION_MINOR 100
-//PHandler v. 2.2
+#define PLUGIN_HANDLER_VERSION_MINOR 200
 
-enum Plugin_Err{	// To be used as the code argument for Plugin_Error()
-    P_ERROR_WARNING,	// Save the error string to serverlog - for minor errors
-    P_ERROR_DISABLE,	// Save the error string to serverlog and disable the plugin - for serious errors
-    P_ERROR_TERMINATE	// Save the error string to serverlog and close the server - for critical errors
-};
-typedef enum{
+typedef enum Plugin_Err_t
+{                     // To be used as the code argument for Plugin_Error()
+    P_ERROR_WARNING,  // Save the error string to serverlog - for minor errors
+    P_ERROR_DISABLE,  // Save the error string to serverlog and disable the plugin - for serious errors
+    P_ERROR_TERMINATE // Save the error string to serverlog and close the server - for critical errors
+} Plugin_Err_t;
+/*
+typedef enum PluginHash_t
+{
     P_HASH_SHA1,
     P_HASH_SHA256,
     P_HASH_TIGER
-}pluginHash_t;
-
-typedef enum{
+} PluginHash_t;
+*/
+/*
+typedef enum pluginCipher_t
+{
     P_CIPHER_AES,
     P_CIPHER_SERPENT
-}pluginCipher_t;
+} pluginCipher_t;
+*/
 
-typedef struct{
-    int major;
-    int minor;
-}version_t;
+typedef struct
+{                               // To be used in OnInfoRequest
+    version_t handlerVersion;   // Requested plugin handler version - mandatory field
+    version_t pluginVersion;    // Version of your plugin - optional
+    char fullName[64];          // Full plugin name, short name is the filename without extension - optional
+    char shortDescription[128]; // Describe in a few words what this plugin does - optional
+    char longDescription[1024]; // Full description - optional
+} pluginInfo_t;
 
-typedef struct{			        // To be used in OnInfoRequest
-    version_t handlerVersion;	// Requested plugin handler version - mandatory field
-    version_t pluginVersion;	// Version of your plugin - optional
-    char fullName[64];		    // Full plugin name, short name is the filename without extension - optional
-    char shortDescription[128];	// Describe in a few words what this plugin does - optional
-    char longDescription[1024];	// Full description - optional
-}pluginInfo_t;
+#endif // _PLUGIN_DECLARATIONS_H_

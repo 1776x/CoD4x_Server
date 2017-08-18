@@ -4,7 +4,7 @@
 #define __DOBJ_H__
 
 #include "q_shared.h"
-#include "entity.h"
+#include "gentity.h"
 #include "xassets/xmodel.h"
 #include "dobj_part_cache.h"
 #include "qcommon_io.h"

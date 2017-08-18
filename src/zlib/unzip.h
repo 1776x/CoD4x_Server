@@ -345,6 +345,7 @@ extern int unzGetLocalExtrafield (unzFile file, void* buf, unsigned len);
 /* Additions by RX '2004 */
 extern unsigned long unzGetOffset (unzFile file);
 extern int unzSetOffset (unzFile file, unsigned long pos);
+extern int unzSetPassword(unzFile file, const char* password);
 
 
 unsigned long FAR * ZEXPORT get_crc_table();

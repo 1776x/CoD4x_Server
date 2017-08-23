@@ -26,7 +26,7 @@
 #include "cvar.h"
 #include "gentity.h"
 #include "player.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 #include "g_shared.h"
 #include "g_sv_shared.h"
 #include "cmd.h"

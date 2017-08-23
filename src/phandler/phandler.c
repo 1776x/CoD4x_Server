@@ -19,11 +19,11 @@
 ===========================================================================
 */
 
-#include "plugin_handler.h"
-#include "q_platform.h"
-#include "sys_main.h"
-#include "objfile_parser.h"
-#include "sec_crypto.h"
+#include "phandler.h"
+#include "../q_platform.h"
+#include "../sys_main.h"
+#include "../objfile_parser.h"
+#include "../sec_crypto.h"
  
 /*=========================================*
  *                                         *

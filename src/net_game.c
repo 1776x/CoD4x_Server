@@ -29,7 +29,7 @@
 #include "server.h"
 #include "net_game.h"
 #include "net_game_conf.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 
 void NET_UDPPacketEvent(netadr_t* from, void* data, int len, int buflen)
 {

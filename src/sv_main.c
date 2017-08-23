@@ -29,7 +29,7 @@
 #include "cmd.h"
 #include "msg.h"
 #include "server.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 #include "net_game_conf.h"
 #include "misc.h"
 #include "g_sv_shared.h"

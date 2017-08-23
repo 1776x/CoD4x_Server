@@ -27,7 +27,7 @@
 #include "server.h"
 #include "sys_main.h"
 #include "sapi.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 
 #include <stdint.h>
 #include <string.h>

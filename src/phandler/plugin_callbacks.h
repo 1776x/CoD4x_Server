@@ -9,11 +9,14 @@
 ////////////////////////////////////////////////////////////
 #include <time.h>
 #include <stdint.h>
-#include "sys_net_types.h"
-#include "cvar_types.h"
-#include "client.h"
-#include "q_shared_types.h"
-#include "httpftp_types.h"
+#include "../sys_net_types.h"
+#include "../cvar_types.h"
+#include "../client.h"
+#include "../q_shared_types.h"
+#include "../httpftp_types.h"
+#include "phandler_shared_types.h"
+#include "../cmd_types.h"
+#include "../scr_vm_types.h"
 
 // Import/export functions macro.
 #ifdef PLUGINEXPORT
@@ -35,6 +38,7 @@
 // Purpose: export function called "Plugin_<funcName>()", but in code you can use "<funcName>()"
 //   which transforms into "Plugin_<funcName>()" call using these definitions.
 #ifndef PLUGINEXPORT
+#ifdef USE_LEGACY_NAMES
 #define Com_Printf Plugin_Com_Printf
 #define Com_PrintWarning Plugin_Com_PrintWarning
 #define Com_PrintError Plugin_Com_PrintError
@@ -145,7 +149,54 @@
 #define HTTP_CreateString_x_www_form_urlencoded Plugin_HTTP_CreateString_x_www_form_urlencoded
 #define HTTP_ParseFormDataBody Plugin_HTTP_ParseFormDataBody
 #define HTTP_GetFormDataItem Plugin_HTTP_GetFormDataItem
-#endif //PLUGINEXPORT
+#define Malloc Plugin_Malloc
+#define Free Plugin_Free
+#define Error Plugin_Error
+#define Cmd_AddPCommand Plugin_Cmd_AddPCommand
+#define Cmd_RemoveCommand Plugin_Cmd_RemoveCommand
+#define TcpConnect Plugin_TcpConnect
+#define TcpGetData Plugin_TcpGetData
+#define TcpSendData Plugin_TcpSendData
+#define TcpCloseConnection Plugin_TcpCloseConnection
+#define UdpSendData Plugin_UdpSendData
+#define ServerPacketEvent Plugin_ServerPacketEvent
+#define GetPlayerSteamID Plugin_GetPlayerSteamID
+#define GetPlayerID Plugin_GetPlayerID
+#define GetLevelTime Plugin_GetLevelTime
+#define GetServerTime Plugin_GetServerTime
+#define Scr_AddFunction Plugin_Scr_AddFunction
+#define Scr_AddMethod Plugin_Scr_AddMethod
+#define Scr_ReplaceFunction Plugin_Scr_ReplaceFunction
+#define Scr_ReplaceMethod Plugin_Scr_ReplaceMethod
+#define ChatPrintf Plugin_ChatPrintf
+#define BoldPrintf Plugin_BoldPrintf
+#define Dvar_GetInteger Plugin_Dvar_GetInteger
+#define Dvar_GetBoolean Plugin_Dvar_GetBoolean
+#define Dvar_GetValue Plugin_Dvar_GetValue
+#define Dvar_GetString Plugin_Dvar_GetString
+#define SV_DropClient Plugin_SV_DropClient
+#define BanClient Plugin_BanClient
+#define GetGentityForEntityNum Plugin_GetGentityForEntityNum
+#define GetClientForClientNum Plugin_GetClientForClientNum
+#define HTTP_SendReceiveData Plugin_HTTP_SendReceiveData
+#define HTTP_MakeHttpRequest Plugin_HTTP_MakeHttpRequest
+#define HTTP_Request Plugin_HTTP_Request
+#define HTTP_GET Plugin_HTTP_GET
+#define HTTP_FreeObj Plugin_HTTP_FreeObj
+/*
+#define EnterCriticalSection Plugin_EnterCriticalSection
+#define LeaveCriticalSection Plugin_LeaveCriticalSection
+#define CreateNewThread Plugin_CreateNewThread
+#define ExitThread Plugin_ExitThread
+#define EnableThreadDebug Plugin_EnableThreadDebug
+#define DisableThreadDebug Plugin_DisableThreadDebug
+#define RunThreadCallbacks Plugin_RunThreadCallbacks
+#define SetupThreadCallback Plugin_SetupThreadCallback
+#define CreateCallbackThread Plugin_CreateCallbackThread
+*/
+#define GetPluginID Plugin_GetPluginID
+#endif //USE_LEGACY_NAMES
+#endif //!PLUGINEXPORT
 
 // Import/export functions section.
 PLUGINAPI void Plugin_Com_Printf(const char *fmt, ...);
@@ -258,3 +309,66 @@ PLUGINAPI char* Plugin_SL_ConvertToString(unsigned int index);
 PLUGINAPI void Plugin_HTTP_CreateString_x_www_form_urlencoded(char* outencodedstring, int len, const char* key, const char *value);
 PLUGINAPI void Plugin_HTTP_ParseFormDataBody(char* body, httpPostVals_t* values);
 PLUGINAPI const char* Plugin_HTTP_GetFormDataItem(httpPostVals_t* values, const char* search);
+PLUGINAPI void *Plugin_Malloc(size_t size);
+PLUGINAPI void Plugin_Free(void *ptr);
+PLUGINAPI void Plugin_Error(EPluginError_t code, const char *fmt, ...);
+PLUGINAPI void Plugin_Cmd_AddPCommand(const char *cmd_name, xcommand_t function, int power);
+PLUGINAPI void Plugin_Cmd_RemoveCommand(const char *cmd_name);
+
+// Networking: TCP
+PLUGINAPI qboolean Plugin_TcpConnect(int connection, const char *remote);
+PLUGINAPI int Plugin_TcpGetData(int connection, void *buf, int size);
+PLUGINAPI qboolean Plugin_TcpSendData(int connection, void *data, int len);
+PLUGINAPI void Plugin_TcpCloseConnection(int connection);
+
+// Networking: UDP
+PLUGINAPI qboolean Plugin_UdpSendData(netadr_t *to, void *data, int len);
+PLUGINAPI void Plugin_ServerPacketEvent(netadr_t *to, void *data, int len);
+
+PLUGINAPI uint64_t Plugin_GetPlayerSteamID(unsigned int clientslot);
+PLUGINAPI uint64_t Plugin_GetPlayerID(unsigned int clientslot);
+PLUGINAPI int Plugin_GetLevelTime();
+PLUGINAPI int Plugin_GetServerTime();
+PLUGINAPI void Plugin_Scr_AddFunction(char *name, xfunction_t function);
+PLUGINAPI void Plugin_Scr_AddMethod(char *name, xfunction_t function);
+PLUGINAPI void Plugin_Scr_ReplaceFunction(char *name, xfunction_t function);
+PLUGINAPI void Plugin_Scr_ReplaceMethod(char *name, xfunction_t function);
+
+// Chat messaging.
+PLUGINAPI void Plugin_ChatPrintf(int slot, const char *fmt, ...);
+PLUGINAPI void Plugin_BoldPrintf(int slot, const char *fmt, ...);
+
+// Dvars
+PLUGINAPI int Plugin_Dvar_GetInteger(void *cvar);
+PLUGINAPI qboolean Plugin_Dvar_GetBoolean(void *cvar);
+PLUGINAPI float Plugin_Dvar_GetValue(void *cvar);
+PLUGINAPI const char *Plugin_Dvar_GetString(void *cvar, char *buf, int sizebuf);
+
+// Clients management.
+PLUGINAPI void Plugin_SV_DropClient(unsigned int clientnum, const char *reason);
+PLUGINAPI void Plugin_BanClient(unsigned int clientnum, int duration, int invokerid, char *banreason);
+
+PLUGINAPI gentity_t *Plugin_GetGentityForEntityNum(int entnum);
+PLUGINAPI client_t *Plugin_GetClientForClientNum(int clientnum);
+
+// HTTP
+PLUGINAPI int Plugin_HTTP_SendReceiveData(ftRequest_t *request);
+PLUGINAPI ftRequest_t *Plugin_HTTP_MakeHttpRequest(const char *url, const char *method, byte *requestpayload, int payloadlen, const char *additionalheaderlines);
+    // Blocking.
+PLUGINAPI ftRequest_t *Plugin_HTTP_Request(const char *url, const char *method, byte *requestpayload, int payloadlen, const char *additionalheaderlines);
+    // Blocking.
+PLUGINAPI ftRequest_t *Plugin_HTTP_GET(const char *url);
+PLUGINAPI void Plugin_HTTP_FreeObj(ftRequest_t *request);
+
+// Multithreading
+//PLUGINAPI void Plugin_EnterCriticalSection();
+//PLUGINAPI void Plugin_LeaveCriticalSection();
+//PLUGINAPI qboolean Plugin_CreateNewThread(void *(*ThreadMain)(void *), threadid_t *tid, void *arg);
+//PLUGINAPI void Plugin_ExitThread(int code);
+//PLUGINAPI void Plugin_EnableThreadDebug();
+//PLUGINAPI void Plugin_DisableThreadDebug();
+//PLUGINAPI void Plugin_RunThreadCallbacks();
+//PLUGINAPI qboolean Plugin_SetupThreadCallback(void *callbackMain, ...);
+//PLUGINAPI qboolean Plugin_CreateCallbackThread(void *threadMain, ...);
+
+PLUGINAPI int Plugin_GetPluginID(); //Only from mainthread callable

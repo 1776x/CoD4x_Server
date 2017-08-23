@@ -30,9 +30,9 @@
 #include "sv_bots.h"
 #include "scr_vm_classfunc.h"
 #include "bg_weapons.h"
-#include "plugin_eventparams.h"
-#include "plugin_events.h"
-#include "plugin_handler.h"
+#include "phandler/phandler_events.h"
+#include "phandler/phandler_events_params.h"
+#include "phandler/phandler.h"
 
 #include <stdarg.h>
 

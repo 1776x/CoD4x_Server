@@ -22,9 +22,9 @@
 // Unused?
 #if 0
 
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 
-P_P_F qboolean Plugin_IsLoaded(char *name){
+qboolean Plugin_IsLoaded(char *name){
 
     int pID,i;
     //Identify the calling plugin
@@ -46,7 +46,7 @@ P_P_F qboolean Plugin_IsLoaded(char *name){
     }
     return qfalse;
 }
-P_P_F version_t *Plugin_GetVersion(char *name)
+version_t *Plugin_GetVersion(char *name)
 {
     static pluginInfo_t info;
     int pID,i;
@@ -69,7 +69,7 @@ for(i=0;i<MAX_PLUGINS;++i){
     }
     return NULL;
 }
-P_P_F qboolean Plugin_ExportFunction(char *name, void *(*function)()){
+qboolean Plugin_ExportFunction(char *name, void *(*function)()){
 
     int pID,i;
     //Identify the calling plugin
@@ -104,7 +104,7 @@ P_P_F qboolean Plugin_ExportFunction(char *name, void *(*function)()){
     ++pluginFunctions.plugins[pID].exports;
     return qtrue;
 }
-P_P_F void *Plugin_ImportFunction(char *pluginName, char *name){
+void *Plugin_ImportFunction(char *pluginName, char *name){
 
     int pID,i,j;
     //Identify the calling plugin

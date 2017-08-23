@@ -19,8 +19,9 @@
 ===========================================================================
 */
 
-#include "plugin_handler.h"
-#include "sys_main.h"
+#include "phandler.h"
+#include "../sys_main.h"
+#include "phandler_shared_types.h"
 /*==========================================*
  *                                          *
  *   Plugin Handler's internal functions    *
@@ -276,7 +277,7 @@ void PHandler_FreeAll(int pID)
     pluginFunctions.plugins[pID].mallocs = 0;
     Com_DPrintf("Plugins: Memory for plugin #%d has been freed.\n", pID);
 }
-P_P_F void PHandler_Error(int pID, int code, char *string)
+void PHandler_Error(int pID, EPluginError_t code, char *string)
 {
     if (pluginFunctions.plugins[pID].enabled == qfalse)
     {
@@ -340,6 +341,7 @@ void PHandler_PluginInfo_f()
         Com_Printf("Plugin \"%s\" is not loaded!\n", Cmd_Argv(1));
         return;
     }
+    
     (*pluginFunctions.plugins[id].OnEvent[PLUGINS_ONINFOREQUEST])(&info);
     Com_Printf("\n");
     Com_Printf("^2Plugin name:^7\n%s\n\n", pluginFunctions.plugins[id].name);
@@ -426,19 +428,6 @@ void PHandler_PluginList_f()
 int PHandler_CallerID() // Can now be inlined, why not ^^
 {
     return pluginFunctions.hasControl;
-    //Legacy code
-    /*
-    void *funcptrs[3];
-    int i,j;
-    j = Sys_Backtrace(funcptrs,3);
-    if(j<3){
-    Com_Error(ERR_FATAL,"PHandler_CallerID: backtrace failed to return function pointers! Possible exploit detected! Terminating the server...\n");
-    }
-    for(i=0;i<MAX_PLUGINS;++i){
-        if(pluginFunctions.plugins[i].lib_start < funcptrs[2] && pluginFunctions.plugins[i].lib_start + pluginFunctions.plugins[i].lib_size > funcptrs[2])
-            return i;
-    }
-    return -1;*/
 }
 
 void PHandler_InitDynCallStub(struct dyncallstub_s *d, xfunction_t func, int pID)
@@ -473,7 +462,7 @@ void PHandler_InitDynCallStub(struct dyncallstub_s *d, xfunction_t func, int pID
     d->xfunction = func;
 }
 
-void PHandler_ScrAddFunction(char *name, xfunction_t function, qboolean replace, int pID)
+void PHandler_Scr_AddFunction(char *name, xfunction_t function, qboolean replace, int pID)
 {
     int i;
 
@@ -526,7 +515,7 @@ void PHandler_ScrAddFunction(char *name, xfunction_t function, qboolean replace,
     pluginFunctions.plugins[pID].scriptfunctions++;
 }
 
-void PHandler_ScrAddMethod(char *name, xfunction_t function, qboolean replace, int pID)
+void PHandler_Scr_AddMethod(char *name, xfunction_t function, qboolean replace, int pID)
 {
     int i;
 
@@ -537,7 +526,7 @@ void PHandler_ScrAddMethod(char *name, xfunction_t function, qboolean replace, i
     }
     else if (pID < 0)
     {
-        Com_Printf("Plugin Handler error: Plugin_ScrAddMethod or Plugin_ScrReplaceMethod called from not within a plugin or from a disabled plugin!\n");
+        Com_Printf("Plugin Handler error: Plugin_Scr_AddMethod or Plugin_Scr_ReplaceMethod called from not within a plugin or from a disabled plugin!\n");
         return;
     }
     if (!pluginFunctions.plugins[pID].loaded)
@@ -577,4 +566,97 @@ void PHandler_ScrAddMethod(char *name, xfunction_t function, qboolean replace, i
     PHandler_InitDynCallStub(&pluginScriptCallStubs.s[pID * MAX_SCRIPTFUNCTIONS + i].dyncallstub, function, pID);
     Sys_MemoryProtectExec(pluginScriptCallStubs.s, sizeof(pluginScriptCallStubs.s));
     pluginFunctions.plugins[pID].scriptmethods++;
+}
+
+qboolean PHandler_TcpConnectMT(int pID, int connection, const char *remote)
+{
+    if (pID < 0)
+    {
+        Com_Printf("Plugins: Error! Tried open a TCP-Connection for unknown plugin!\n");
+        return qfalse;
+    }
+    if (pluginFunctions.plugins[pID].enabled == qfalse)
+    {
+        Com_Printf("^1WARNING^7: Tried open a TCP-Connection for a disabled plugin!\n");
+        return qfalse;
+    }
+    if (connection >= PLUGIN_MAX_SOCKETS || connection < 0)
+    {
+        Com_PrintError("Plugin_TcpConnect: Second argument can only be a value inside the range: 0...%d plugin ID: #%d\n", PLUGIN_MAX_SOCKETS);
+        return qfalse;
+    }
+    return PHandler_TcpConnect(pID, remote, connection);
+}
+
+int PHandler_TcpGetDataMT(int pID, int connection, void *buf, int size)
+{
+    if (pID < 0 || pID >= MAX_PLUGINS)
+    {
+        Com_Printf("Plugin_TcpGetData: Error! Tried get TCP data for unknown plugin!\n");
+        return -1;
+    }
+    if (pluginFunctions.plugins[pID].enabled == qfalse)
+    {
+        Com_Printf("^1WARNING^7: Plugin_TcpGetData: Tried get TCP data for a disabled plugin!\n");
+        return -1;
+    }
+    if (connection >= PLUGIN_MAX_SOCKETS || connection < 0)
+    {
+        Com_PrintError("Plugin_TcpGetData: First argument can only be a value inside the range: 0...%d plugin ID: #%d\n", PLUGIN_MAX_SOCKETS, pID);
+        return -1;
+    }
+    if (buf == NULL)
+    {
+        Com_PrintError("Plugin_TcpGetData: Third argument can not be a NULL-Pointer for plugin ID: #%d\n", pID);
+        return -1;
+    }
+
+    return PHandler_TcpGetData(pID, connection, buf, size);
+}
+
+qboolean PHandler_TcpSendDataMT(int pID, int connection, void *data, int len)
+{
+    if (pID < 0 || pID >= MAX_PLUGINS)
+    {
+        Com_Printf("Plugin_TcpSendData: Error! Tried get TCP data for unknown plugin!\n");
+        return qfalse;
+    }
+    if (pluginFunctions.plugins[pID].enabled == qfalse)
+    {
+        Com_Printf("^1WARNING^7: Plugin_TcpSendData: Tried get TCP data for a disabled plugin!\n");
+        return qfalse;
+    }
+    if (connection >= PLUGIN_MAX_SOCKETS || connection < 0)
+    {
+        Com_PrintError("Plugin_TcpSendData: Second argument can only be a value inside the range: 0...%d plugin ID: #%d\n", PLUGIN_MAX_SOCKETS, pID);
+        return qfalse;
+    }
+    if (data == NULL)
+    {
+        Com_PrintError("Plugin_TcpSendData: Second argument can not be a NULL-Pointer for plugin ID: #%d\n", pID);
+        return qfalse;
+    }
+
+    return PHandler_TcpSendData(pID, connection, data, len);
+}
+// todo: move to callback + few upper
+void PHandler_TcpCloseConnectionMT(int pID, int connection)
+{
+    //Identify the calling plugin
+    if (pID < 0 || pID >= MAX_PLUGINS)
+    {
+        Com_Printf("Plugin_TcpCloseConnection: Error! Tried get close a connection for unknown plugin!\n");
+        return;
+    }
+    if (pluginFunctions.plugins[pID].enabled == qfalse)
+    {
+        Com_Printf("^1WARNING^7: Plugin_TcpCloseConnection: Tried to close a connection for a disabled plugin!\n");
+        return;
+    }
+    if (connection >= PLUGIN_MAX_SOCKETS || connection < 0)
+    {
+        Com_PrintError("Plugin_TcpCloseConnection: Second argument can only be a value inside the range: 0...%d plugin ID: #%d\n", PLUGIN_MAX_SOCKETS, pID);
+        return;
+    }
+    PHandler_TcpCloseConnection(pID, connection);
 }

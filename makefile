@@ -47,12 +47,17 @@ ZLIB_DIR=$(SRC_DIR)/zlib
 WIN_DIR=$(SRC_DIR)/win32
 LINUX_DIR=$(SRC_DIR)/unix
 ASSETS_DIR=$(SRC_DIR)/xassets
+PHANDLER_DIR=$(SRC_DIR)/phandler
+
 #botlib
 EXTERNAL=mbedtls tomcrypt
-
+EXTERNAL_CLEAN=$(addprefix clean_,$(EXTERNAL))
 ##############################
 # Setup external applications.
 NASM=nasm
+DLLTOOL=dlltool
+PEXPORTS=pexports
+PAXCTL=paxctl
 
 
 ###########################################################
@@ -97,6 +102,7 @@ ASM_SOURCES=$(wildcard $(SRC_DIR)/*.asm)
 C_SOURCES=$(wildcard $(SRC_DIR)/*.c)
 ZLIB_SOURCES=$(wildcard $(ZLIB_DIR)/*.c)
 ASSETS_SOURCES=$(wildcard $(ASSETS_DIR)/*.c)
+PHANDLER_SOURCES=$(wildcard $(PHANDLER_DIR)/*.c)
 
 #################################################################
 # Object files lists. (prefixes for rules may be required later).
@@ -104,6 +110,7 @@ ASM_OBJ=$(patsubst $(SRC_DIR)/%.asm,$(OBJ_DIR)/%.o,$(ASM_SOURCES))
 C_OBJ=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
 ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 ASSETS_OBJ=$(patsubst $(ASSETS_DIR)/%.c,$(OBJ_DIR)/%.o,$(ASSETS_SOURCES))
+PHANDLER_OBJ=$(patsubst $(PHANDLER_DIR)/%.c,$(OBJ_DIR)/%.o,$(PHANDLER_SOURCES))
 
 #############################################################
 #############################################################
@@ -120,14 +127,8 @@ notify:
 	@echo Server start
 
 #################################
-# A rule to make mbedtls library.
-mbedtls:
-	@echo   $(MAKE)  $@
-	@$(MAKE) -C $(SRC_DIR)/$@
-
-##################################
-# A rule to make tomcrypt library.
-tomcrypt:
+# A rule to make external dependencies.
+$(EXTERNAL):
 	@echo   $(MAKE)  $@
 	@$(MAKE) -C $(SRC_DIR)/$@
 
@@ -143,7 +144,7 @@ endif
 
 ###############################
 # A rule to link server binary.
-$(TARGET): $(OS_OBJ) $(C_OBJ) $(ZLIB_OBJ) $(ASSETS_OBJ) $(ASM_OBJ) obj/version.o
+$(TARGET): $(PHANDLER_OBJ) $(OS_OBJ) $(C_OBJ) $(ZLIB_OBJ) $(ASSETS_OBJ) $(ASM_OBJ) obj/version.o
 	@echo   $(CC)  $@
 # CFLAGS for compiler, LFLAGS for linker.
 	@$(CC) $(LFLAGS) -o $@ $^ $(RESOURCE_FILE) $(LLIBS)
@@ -162,6 +163,13 @@ FORCE:
 # A rule to build common server code.
 # -march=nocona
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo   $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(C_DEFINES) -o $@ $<
+
+#####################################
+# A rule to build plugin handler code.
+# -march=nocona
+$(OBJ_DIR)/%.o: $(PHANDLER_DIR)/%.c
 	@echo   $(CC)  $@
 	@$(CC) -c $(CFLAGS) $(C_DEFINES) -o $@ $<
 
@@ -198,29 +206,34 @@ $(OBJ_DIR)/%.o: $(LINUX_DIR)/%.c
 ########################################################
 # A rule for Windows to create server interface library.
 $(INTERFACE_LIB): $(DEF_FILE) $(TARGET)
-	@echo   dlltool  $@
-	@dlltool -D $(TARGET) -d $(DEF_FILE) -l $@
+	@echo   $(DLLTOOL)  $@
+	@$(DLLTOOL) -D $(TARGET) -d $(DEF_FILE) -l $@
 
 ####################################################################
 # A rule for Windows to create server module definition file (.def).
 $(DEF_FILE): $(TARGET)
-	@echo   pexports  $@
-	@pexports $^ > $@
+	@echo   $(PEXPORTS)  $@
+	@$(PEXPORTS) $^ > $@
 
 ####################################################
 # A rule for Linux to remove some memory protection.
 do_paxctl: $(TARGET)
-	@paxctl -c $<
-	@paxctl -em $<
+	@$(PAXCTL) -c $<
+	@$(PAXCTL) -em $<
 
-############################
-# Delete built object files.
+###################################
+# Delete server built object files.
 clean:
-	@echo   clean Server
+	@echo   clean server
 	@$(CLEAN)
 
-#@echo   clean Mbedtls
-#@$(MAKE) -C $(SRC_DIR)/mbedtls clean
-#@echo   clean Tomcrypt
-#@$(MAKE) -C $(SRC_DIR)/tomcrypt clean
+################################
+# Delete all built object files.
+clean_all: clean $(EXTERNAL_CLEAN)
+	@echo   clean done.
 
+#################################################
+# Delete only external dependencies object files.
+$(EXTERNAL_CLEAN):
+	@echo   $@
+	@$(MAKE) -C $(SRC_DIR)/$(patsubst clean_%,%,$@) clean

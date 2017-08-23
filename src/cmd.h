@@ -26,17 +26,8 @@
 #define __CMD_H__
 
 #include "q_shared.h"
+#include "cmd_types.h"
 
-// paramters for command buffer stuffing
-typedef enum {
-	EXEC_NOW,			// don't return until completed, a VM should NEVER use this,
-						// because some commands might cause the VM to be unloaded...
-	EXEC_INSERT,		// insert at current position, but don't run yet
-	EXEC_APPEND			// add to end of the command buffer (normal case)
-} cbufExec_t;
-
-typedef void (*xcommand_t)(void);
-typedef void (*completionFunc_t)( char *args, int argNum );
 void Cmd_Init(void);
 void Cmd_TokenizeString(const char* string);
 void Cmd_EndTokenizedString();

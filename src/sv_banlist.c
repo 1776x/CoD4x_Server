@@ -30,7 +30,7 @@
 #include "sys_main.h"
 #include "server.h"
 #include "cmd.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 
 #include <stdlib.h>
 #include <string.h>

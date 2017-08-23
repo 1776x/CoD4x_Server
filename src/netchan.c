@@ -29,7 +29,7 @@
 #include "msg.h"
 #include "netchan.h"
 #include "q_platform.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 #include "net_game_conf.h"
 #include "sha.h"
 

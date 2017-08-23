@@ -1,8 +1,7 @@
-#if !defined _PLUGIN_EVENTPARAMS_H_
-#define _PLUGIN_EVENTPARAMS_H_
-
-#include "gentity.h" // gentity_t
-#include "g_entity.h" // hitLocation_t
+#pragma once
+////////////////////////////////////////////////////////////////////////////////
+// This file contains types definitions for plugin handler events parameters. //
+////////////////////////////////////////////////////////////////////////////////
 
 typedef struct ScriptEventParams_OnPlayerKilled_t 
 {
@@ -45,5 +44,3 @@ typedef struct ScriptEventParams_OnPlayerLastStand_t
     hitLocation_t hitLoc;
     int psTimeOffset;
 } ScriptEventParams_OnPlayerLastStand_t;
-
-#endif

@@ -207,7 +207,7 @@ or configs will never get loaded from disk!
 #include "sys_main.h"
 #include "cmd.h"
 #include "sys_thread.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 #include "crc.h"
 
 #include <sys/stat.h>

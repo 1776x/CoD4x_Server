@@ -31,7 +31,7 @@
 #include "net_game_conf.h"
 #include "misc.h"
 #include "g_sv_shared.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 #include "q_platform.h"
 #include "sys_main.h"
 #include "punkbuster.h"

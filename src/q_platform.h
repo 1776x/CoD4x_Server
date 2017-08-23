@@ -69,8 +69,6 @@
 
 #endif
 
-#define DLLEXPORT
-
 #ifndef __ASM_I386__ // don't include the C bits if included from qasm.h
 
 // for windows fastcall option
@@ -116,9 +114,6 @@
 
 #undef QCALL
 #define QCALL __stdcall
-
-#undef DLLEXPORT
-#define DLLEXPORT __declspec(dllexport)
 
 #if defined( _MSC_VER )
 #define OS_STRING "win_msvc"

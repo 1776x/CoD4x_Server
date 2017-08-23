@@ -57,3 +57,6 @@ typedef enum qboolean
 
 typedef int fileHandle_t;
 typedef unsigned int clipHandle_t;
+typedef int scr_entref_t;
+
+typedef unsigned short uint16_t;

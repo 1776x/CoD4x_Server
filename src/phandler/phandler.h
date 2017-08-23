@@ -19,7 +19,7 @@
 ===========================================================================
 */
 
-#include "q_platform.h"
+#include "../q_platform.h"
 
 #ifndef PLUGIN_HANDLER_H
 #define PLUGIN_HANDLER_H
@@ -37,24 +37,22 @@
 
 typedef void convariable_t; //For plugins
 
-#define P_P_F __attribute__((__noinline__)) __attribute__((__cdecl__)) DLLEXPORT
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "cmd.h"        // xcommand_t
-#include "sys_net.h"    // netadr
-#include "msg.h"        // msg_t
-#include "g_shared.h"   // level
-#include "qcommon_io.h" // Com_Printf
-#include "server.h"     // client_t
-#include "sys_net.h"    // Tcp stuff
-#include "scr_vm.h"
-#include "sys_thread.h"
+#include "../cmd.h"        // xcommand_t
+#include "../sys_net.h"    // netadr
+#include "../msg.h"        // msg_t
+#include "../g_shared.h"   // level
+#include "../qcommon_io.h" // Com_Printf
+#include "../server.h"     // client_t
+#include "../sys_net.h"    // Tcp stuff
+#include "../scr_vm.h"
+#include "../sys_thread.h"
 
-#include "../plugins/plugin_declarations.h"
-#include "plugin_events.h"
+#include "phandler_events.h"
+#include "phandler_shared_types.h"
 
 #define PLUGIN_MAX_MALLOCS 50
 #define PLUGIN_MAX_SOCKETS 4
@@ -202,7 +200,7 @@ void PHandler_Init();
 void *PHandler_Malloc(int, size_t);
 void PHandler_Free(int, void *);
 void PHandler_FreeAll(int);
-void PHandler_Error(int, int, char *);
+void PHandler_Error(int, EPluginError_t, char *);
 qboolean PHandler_TcpConnect(int, const char *, int);
 int PHandler_TcpGetData(int, int, void *, int);
 int PHandler_TcpSendData(int, int, void *, int);
@@ -210,8 +208,12 @@ void PHandler_TcpCloseConnection(int, int);
 int PHandler_CallerID();
 void PHandler_ChatPrintf(int, char *, ...);
 void PHandler_CmdExecute_f(void); // fake server command for use in plugin commands
-void PHandler_ScrAddMethod(char *name, xfunction_t function, qboolean replace, int pID);
-void PHandler_ScrAddFunction(char *name, xfunction_t function, qboolean replace, int pID);
+void PHandler_Scr_AddMethod(char *name, xfunction_t function, qboolean replace, int pID);
+void PHandler_Scr_AddFunction(char *name, xfunction_t function, qboolean replace, int pID);
+int PHandler_TcpGetDataMT(int pID, int connection, void *buf, int size);
+qboolean PHandler_TcpConnectMT(int pID, int connection, const char *remote);
+qboolean PHandler_TcpSendDataMT(int pID, int connection, void *data, int len);
+void PHandler_TcpCloseConnectionMT(int pID, int connection);
 // --------------------------------------//
 //  Plugin Handler's own server commands //
 // --------------------------------------//
@@ -220,7 +222,7 @@ void PHandler_LoadPlugin_f(void);
 void PHandler_UnLoadPlugin_f(void);
 void PHandler_PluginList_f(void);
 void PHandler_PluginInfo_f(void);
-void Plugin_RunThreadCallbacks();
+//void Plugin_RunThreadCallbacks();
 
 /*
 

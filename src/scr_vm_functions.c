@@ -36,7 +36,7 @@
 #include "sapi.h"
 #include <string.h>
 #include <time.h>
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 #include "scr_vm_functions.h"
 #include "tomcrypt/tomcrypt_misc.h"
 

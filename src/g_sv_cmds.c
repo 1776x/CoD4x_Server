@@ -26,7 +26,7 @@
 #include "player.h"
 #include "g_sv_shared.h"
 #include "g_shared.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 #include "cmd.h"
 #include "qcommon_io.h"
 #include "server.h"

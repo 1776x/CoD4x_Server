@@ -23,11 +23,7 @@
 #include "scr_vm.h"
 #include "g_sv_shared.h"
 #include "dobj.h"
-
-#ifndef SCR_ENTREF_DEFINED
-#define SCR_ENTREF_DEFINED
-typedef int scr_entref_t;
-#endif
+#include "q_shared_types.h"
 
 void PlayerCmd_GetUid(scr_entref_t arg);
 void PlayerCmd_SetUid(scr_entref_t arg);

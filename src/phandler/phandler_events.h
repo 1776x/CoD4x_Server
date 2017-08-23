@@ -1,25 +1,7 @@
-/*
-===========================================================================
-    Copyright (C) 2010-2013  Ninja and TheKelm
+#pragma once
 
-    This file is part of CoD4X18-Server source code.
-
-    CoD4X18-Server source code is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-
-    CoD4X18-Server source code is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>
-===========================================================================
-*/
-#if !defined _PLUGIN_EVENTS_H
-#define _PLUGIN_EVENTS_H
+#include "../gentity.h" // gentity_t
+#include "../g_entity.h" // hitLocation_t
 
 // We want to execute event by unique ID and not by name so this enum is required.
 // If you editing this enum, look inside plugin_handler.c - there are mapping available.
@@ -72,5 +54,3 @@ typedef enum PluginEvents
 // Enum and string array are not bound to themselves so there may happen mismatches.
 // So this function required to map event ID to its name.
 const char* const GetEventName(PluginEvents EventIdx_);
-
-#endif

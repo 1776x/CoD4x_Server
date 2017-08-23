@@ -37,7 +37,7 @@
 #include "cmd.h"
 #include "sys_net.h"
 #include "xassets.h"
-#include "plugin_handler.h"
+#include "phandler/phandler.h"
 #include "misc.h"
 #include "scr_vm.h"
 #include "netchan.h"
@@ -1118,7 +1118,7 @@ __optimize3 void Com_Frame( void ) {
 	NET_Sleep(0);
 	NET_TcpServerPacketEventLoop();
 	Sys_RunThreadCallbacks();
-  Plugin_RunThreadCallbacks();
+    //Plugin_RunThreadCallbacks();
 	Cbuf_Execute (0 ,0);
 
 #ifdef TIMEDEBUG

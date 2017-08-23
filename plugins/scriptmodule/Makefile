@@ -24,7 +24,7 @@ ADDITIONALLIBS_WIN32=
 CC=g++
 # Noteworthy: server compiled against libgcc and libstdc++ statically, so
 #   dynamic linking will cause crash at exit.
-CFLAGS=-m32 -O3 -Wall -s --pedantic -std=c++11 -static-libgcc -static-libstdc++
+CFLAGS=-m32 -O3 -Wall -s --pedantic -std=c++11 -static-libgcc -static-libstdc++ -I../../src/phandler
 C_MODULES=$(wildcard *.c)
 CPP_MODULES=$(wildcard *.cpp)
 C_OBJECTS=$(patsubst %.c,obj/%.o,$(C_MODULES))
@@ -82,7 +82,7 @@ win32: bin/lib$(PLUGIN_NAME).dll
 
 bin/lib$(PLUGIN_NAME).dll: $(OBJECTS)
 	@echo $(CC)    "$@"
-	@$(CC) -shared $(CFLAGS) -o $@ $^ ../libcom_plugin.a $(ADDITIONALLIBS)
+	@$(CC) -shared $(CFLAGS) -o $@ $^ -L./.. -lcom_plugin $(ADDITIONALLIBS)
 
 clean_win32:
 	@del $(subst /,\\,$(OBJECTS))

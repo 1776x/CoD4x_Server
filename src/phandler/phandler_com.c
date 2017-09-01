@@ -48,7 +48,7 @@ qboolean Plugin_IsLoaded(char *name){
 }
 version_t *Plugin_GetVersion(char *name)
 {
-    static pluginInfo_t info;
+    static SPluginInfo_t info;
     int pID,i;
     //Identify the calling plugin
     pID = PHandler_CallerID();

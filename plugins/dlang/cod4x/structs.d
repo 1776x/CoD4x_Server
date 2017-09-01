@@ -8,7 +8,7 @@ const PLUGIN_HANDLER_VERSION_MINOR = 302;
 
 alias qboolean = int;
 
-align(1) struct pluginInfo_t{			        // To be used in OnInfoRequest
+align(1) struct SPluginInfo_t{			        // To be used in OnInfoRequest
 align(1):
     version_t handlerVersion;	// Requested plugin handler version - mandatory field
     version_t pluginVersion;	// Version of your plugin - optional

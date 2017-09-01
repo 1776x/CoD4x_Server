@@ -2,7 +2,7 @@
 //#define USE_LEGACY_NAMES
 #include <cod4x_plugin.h>
 
-void OnInfoRequest(pluginInfo_t *info)
+void OnInfoRequest(SPluginInfo_t *info)
 {
 
 }

@@ -79,8 +79,8 @@ struct version_t
 //C         char fullName[64];		    // Full plugin name, short name is the filename without extension - optional
 //C         char shortDescription[128];	// Describe in a few words what this plugin does - optional
 //C         char longDescription[1024];	// Full description - optional
-//C     }pluginInfo_t;
-struct pluginInfo_t
+//C     }SPluginInfo_t;
+struct SPluginInfo_t
 {
     version_t handlerVersion;
     version_t pluginVersion;

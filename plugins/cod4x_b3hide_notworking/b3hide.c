@@ -124,7 +124,7 @@ PCL int OnInit() {
     return 0;
 }
 
-PCL void OnInfoRequest(pluginInfo_t *info) {
+PCL void OnInfoRequest(SPluginInfo_t *info) {
     // Memory pointed by info is allocated by the server binary, just fill in the fields
     // =====  MANDATORY FIELDS  =====
     info->handlerVersion.major = PLUGIN_HANDLER_VERSION_MAJOR;

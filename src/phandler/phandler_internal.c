@@ -158,7 +158,7 @@ void PHandler_BoldPrintf(int slot, char *fmt, ...)
     va_end(vl);
     SV_SendServerCommand(cl, "c \"%s\"", str);
 }
-
+/*
 void PHandler_CmdExecute_f()
 {
     Com_DPrintf("Attempting to execute a plugin command '%s'.\n", Cmd_Argv(0));
@@ -189,94 +189,8 @@ void PHandler_CmdExecute_f()
             }
         }
     }
-}
+}*/
 
-void PHandler_RemoveCommand(int pID, char *name)
-{
-    int i, j, k;
-    j = pluginFunctions.plugins[pID].cmds;
-    for (i = 0; i < j; i++)
-    {
-        if (strcmp(name, pluginFunctions.plugins[pID].cmd[i].name) == 0)
-        {
-            Cmd_RemoveCommand(name);
-            memset(pluginFunctions.plugins[pID].cmd, 0x00, sizeof(pluginCmd_t));
-            // Now we need to rearrrange the array...
-            for (k = i; k < j - 1; k++)
-            {
-                pluginFunctions.plugins[pID].cmd[k] = pluginFunctions.plugins[pID].cmd[k + 1];
-            }
-            Com_DPrintf("Command '%s' removed for plugin %s.\n", name, pluginFunctions.plugins[pID].name);
-            return;
-        }
-    }
-    Com_DPrintf("Warning: tried removing command '%s', which was not found for plugin %s.\n", name, pluginFunctions.plugins[pID].name);
-}
-
-void *PHandler_Malloc(int pID, size_t size)
-{
-    int i;
-    Com_DPrintf("Attempting to allocate %dB of memory for plugin #%d...\n", size, pID);
-    //Plugin identified, find the first free spot in it's allocated pointers table
-    for (i = 0; i < PLUGIN_MAX_MALLOCS; i++)
-    {
-        if (pluginFunctions.plugins[pID].memory[i].ptr == NULL)
-        {
-            pluginFunctions.plugins[pID].memory[i].ptr = malloc(size);
-            pluginFunctions.plugins[pID].memory[i].size = size;
-            pluginFunctions.plugins[pID].usedMem += size;
-            ++pluginFunctions.plugins[pID].mallocs;
-            Com_DPrintf("Allocating %dB of memory for plugin #%d.\n", size, pID);
-            return pluginFunctions.plugins[pID].memory[i].ptr;
-        }
-    }
-    Com_Printf("Plugins: Warning! Memory allocations limit reached for plugin #%d!\n", pID);
-    return NULL;
-}
-void PHandler_Free(int pID, void *ptr)
-{
-
-    int i;
-    if (ptr == NULL)
-    {
-        Com_DPrintf("Plugins: Warning! Plugin #%d tried freeing a NULL pointer! Called Plugin_Free() twice?\n", pID);
-        return;
-    }
-    //Plugin identified, find the first free spot in it's allocated pointers table
-    for (i = 0; i < PLUGIN_MAX_MALLOCS; i++)
-    {
-        if (pluginFunctions.plugins[pID].memory[i].ptr == ptr)
-        {
-            free(ptr);
-            pluginFunctions.plugins[pID].memory[i].ptr = NULL;
-            pluginFunctions.plugins[pID].usedMem -= pluginFunctions.plugins[pID].memory[i].size;
-            --pluginFunctions.plugins[pID].mallocs;
-            return;
-        }
-    }
-    Com_DPrintf("Plugins: Warning! Plugin %d tried freeing an unknown pointer!\n", pID);
-}
-
-void PHandler_FreeAll(int pID)
-{
-    int i;
-    if (pID < 0)
-    {
-        Com_Printf("Plugins: Error! Tried to free all memory of an unknown plugin!\n");
-        return;
-    }
-    for (i = 0; i < PLUGIN_MAX_MALLOCS; ++i)
-    {
-        if (pluginFunctions.plugins[pID].memory[i].ptr != NULL)
-        {
-            free(pluginFunctions.plugins[pID].memory[i].ptr);
-            pluginFunctions.plugins[pID].memory[i].ptr = NULL;
-        }
-    }
-    pluginFunctions.plugins[pID].usedMem = 0;
-    pluginFunctions.plugins[pID].mallocs = 0;
-    Com_DPrintf("Plugins: Memory for plugin #%d has been freed.\n", pID);
-}
 void PHandler_Error(int pID, EPluginError_t code, char *string)
 {
     if (pluginFunctions.plugins[pID].enabled == qfalse)
@@ -303,133 +217,12 @@ void PHandler_Error(int pID, EPluginError_t code, char *string)
     }
 }
 /*
-=================
- Server commands
-=================
-*/
-void PHandler_LoadPlugin_f(void)
-{
-    if (Cmd_Argc() < 2)
-    {
-        Com_Printf("Usage: %s <plugin file name without extension>\n", Cmd_Argv(0));
-        return;
-    }
-    PHandler_Load(Cmd_Argv(1));
-}
-void PHandler_UnLoadPlugin_f()
-{
-    if (Cmd_Argc() < 2)
-    {
-        Com_Printf("Usage: %s <plugin file name without extension>\n", Cmd_Argv(0));
-        return;
-    }
-    PHandler_UnloadByName(Cmd_Argv(1));
-}
-void PHandler_PluginInfo_f()
-{
-    if (Cmd_Argc() < 2)
-    {
-        Com_Printf("Usage: %s <plugin name>\n", Cmd_Argv(0));
-        return;
-    }
-    int id = PHandler_GetID(Cmd_Argv(1));
-    int i;
-    int vMajor, vMinor;
-    pluginInfo_t info;
-    if (id < 0)
-    {
-        Com_Printf("Plugin \"%s\" is not loaded!\n", Cmd_Argv(1));
-        return;
-    }
-    
-    (*pluginFunctions.plugins[id].OnEvent[PLUGINS_ONINFOREQUEST])(&info);
-    Com_Printf("\n");
-    Com_Printf("^2Plugin name:^7\n%s\n\n", pluginFunctions.plugins[id].name);
-    vMajor = info.pluginVersion.major;
-    vMinor = info.pluginVersion.minor;
-    if (vMinor > 100)
-    {
-        while (vMinor >= 1000)
-        {
-            vMinor /= 10;
-        }
-    }
-    Com_Printf("^2Plugin version:^7\n%d.%d\n\n", vMajor, vMinor);
-    Com_Printf("^2Full plugin name:^7\n%s\n\n", info.fullName);
-    Com_Printf("^2Short plugin description:^7\n%s\n\n", info.shortDescription);
-    Com_Printf("^2Full plugin description:^7\n%s\n\n", info.longDescription);
-    Com_Printf("^2Commands:^7\n\n");
-    for (i = 0; i < pluginFunctions.plugins[id].cmds; ++i)
-    {
-        Com_Printf(" -%s\n", pluginFunctions.plugins[id].cmd[i].name);
-    }
-    Com_Printf("^2Total of %d commands.^7\n\n", pluginFunctions.plugins[id].cmds);
-
-    Com_Printf("^2Script Functions:^7\n\n");
-    for (i = 0; i < pluginFunctions.plugins[id].scriptfunctions; ++i)
-    {
-        if (!pluginScriptCallStubs.s[id * MAX_SCRIPTFUNCTIONS + i].isMethod)
-        {
-            Com_Printf(" -%s\n", pluginScriptCallStubs.s[id * MAX_SCRIPTFUNCTIONS + i].name);
-        }
-    }
-    Com_Printf("^2Total of %d functions.^7\n\n", pluginFunctions.plugins[id].scriptfunctions);
-
-    Com_Printf("^2Script Methods:^7\n\n");
-    for (i = 0; i < pluginFunctions.plugins[id].scriptmethods; ++i)
-    {
-        if (pluginScriptCallStubs.s[id * MAX_SCRIPTFUNCTIONS + i].isMethod)
-        {
-            Com_Printf(" -%s\n", pluginScriptCallStubs.s[id * MAX_SCRIPTFUNCTIONS + i].name);
-        }
-    }
-    Com_Printf("^2Total of %d methods.^7\n\n", pluginFunctions.plugins[id].scriptmethods);
-}
-void PHandler_PluginList_f()
-{
-    int i, j;
-    if (!pluginFunctions.loadedPlugins)
-    {
-        Com_Printf("No plugins are loaded.\n");
-    }
-    else
-    {
-        Com_Printf("\nLoaded plugins:\n\n");
-        Com_Printf("*----------------------------------------------------------------------------------*\n");
-        Com_Printf("| ID |         name         | enabled? | memory allocations | total all. mem. in B |\n");
-        for (i = 0, j = 0; i < pluginFunctions.loadedPlugins; ++i, ++j)
-        {
-            while (j < MAX_PLUGINS)
-            { // ORing might be dangerous when the compiler uses optimalization...
-                if (pluginFunctions.plugins[j].loaded)
-                    break;
-                ++j;
-            }
-            if (j == MAX_PLUGINS)
-            {
-                i = j;
-                break;
-            }
-            Com_Printf("| %-3d| %-21s| %-9s| %-19d| %-21d|\n", j, pluginFunctions.plugins[j].name, pluginFunctions.plugins[j].enabled == 0 ? "no" : "yes", pluginFunctions.plugins[j].mallocs, pluginFunctions.plugins[j].usedMem);
-        }
-
-        Com_Printf("*----------------------------------------------------------------------------------*\n");
-        Com_Printf("\nTotal of %d loaded plugins.\n", i);
-    }
-
-    Com_Printf("\nPlugin handler version: %d.%d.\n", PLUGIN_HANDLER_VERSION_MAJOR, PLUGIN_HANDLER_VERSION_MINOR);
-}
-/*
 ======
  Misc
 ======
 */
 
-int PHandler_CallerID() // Can now be inlined, why not ^^
-{
-    return pluginFunctions.hasControl;
-}
-
+// TODO: LAMBDA <3
 void PHandler_InitDynCallStub(struct dyncallstub_s *d, xfunction_t func, int pID)
 {
     //Static Opcodes

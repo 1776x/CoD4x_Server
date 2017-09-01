@@ -1,0 +1,259 @@
+#include "PluginHandler.h"
+#include "KnownPlugins.h"
+#include "PHandlerCmds.h"
+
+using namespace std;
+
+#ifndef __FUNCTION_NAME__
+#ifdef WIN32   //WINDOWS
+    #define __FUNCTION_NAME__ __FUNCTION__
+#else          //*NIX
+    #define __FUNCTION_NAME__ __func__
+#endif
+#endif
+
+#define DURING_EVENT_ONLY() \
+    do { \
+        if (!m_CurrentPlugin)
+        {
+            Com_PrintError("Attempt to call function '"__FUNCTION_NAME__"' outside of plugin event\n");
+            return;
+        }
+    } while(0)
+
+#define DURING_EVENT_ONLY_RET(retVal) \
+    do { \
+        if (!m_CurrentPlugin)
+        {
+            Com_PrintError("Attempt to call function '"__FUNCTION_NAME__"' outside of plugin event\n");
+            return retVal;
+        }
+    } while(0)
+
+static CPluginHandler g_Instance;
+
+CPluginHandler* PluginHandler()
+{
+    return &g_Instance;
+}
+
+CPluginHandler::CPluginHandler() :
+    m_Initialized(false),
+    m_CurrentPlugin(nullptr)
+{
+}
+
+CPluginHandler::~CPluginHandler()
+{
+    // TODO: cleanup required?
+    // I meant Cmd_RemoveCommand etc.
+}
+
+void CPluginHandler::Init()
+{
+    if (m_Initialized)
+    {
+        Com_Printf("Error: you are trying to initialize plugin handler more than once. Stop it!\n");
+        return;
+    }
+
+    Cmd_AddCommand("loadplugin", OnCmd_LoadPlugin);
+    Cmd_AddCommand("unloadplugin", OnCmd_UnloadPlugin);
+    Cmd_AddCommand("plugins", OnCmd_PluginList);
+    Cmd_AddCommand("plugininfo", OnCmd_PluginInfo);
+
+    m_Initialized = true;
+    Com_Printf("-------- Plugin handler initialization completed --------\n");
+}
+
+void CPluginHandler::LoadPlugin(const char* LibName_)
+{
+    // Checking if the plugin is not already loaded.
+    if (m_Plugins.find(LibName_) != m_Plugins.end())
+    {
+        Com_Printf("This plugin already loaded\n");
+        return;
+    }
+
+
+    string pluginPath = getPluginFilePath(LibName_);
+    // Checking if we can load this plugin.
+    if (!isLegacyPlugin(pluginPath))
+    {
+        Com_Printf("This plugin can not be loaded in secure mode\n");
+        return;
+    }
+
+
+    // Begin loading new plugin.
+    CPlugin plugin;
+    plugin.LoadFromFile(pluginPath);
+
+
+    Com_DPrintf("Fetching plugin information...");
+    SPluginInfo_t info;
+    m_CurrentPlugin = &plugin;
+    if (!plugin.Event(PLUGINS_ONINFOREQUEST, &info))
+    {
+        Com_PrintError("Plugin function '%s' not found\n", GetEventName(PLUGINS_ONINFOREQUEST));
+        plugin.Unload();
+        m_CurrentPlugin = nullptr;
+        return;
+    }
+
+    if (info.handlerVersion.major != PLUGIN_HANDLER_VERSION_MAJOR || (info.handlerVersion.minor - info.handlerVersion.minor % 100) != (PLUGIN_HANDLER_VERSION_MINOR - PLUGIN_HANDLER_VERSION_MINOR % 100))
+    {
+        Com_PrintError("This plugin might not be compatible with this server version! Requested plugin handler version: %d.%d, server's plugin handler version: %d.%d. Unloading the plugin...\n", info.handlerVersion.major, info.handlerVersion.minor, PLUGIN_HANDLER_VERSION_MAJOR, PLUGIN_HANDLER_VERSION_MINOR);
+        plugin.Unload();
+        return;
+    }
+    Com_DPrintf("done\n");
+
+
+    Com_DPrintf("Executing plugin's OnInit...");
+    // plugin version mismatch.
+    int success = 0;
+    if (!plugin.Event(PLUGINS_ONINIT, &success))
+    {
+        Com_PrintError("Plugin function '%s' not found\n", GetEventName(PLUGINS_ONINIT));
+        plugin.Unload();
+        m_CurrentPlugin = nullptr;
+        return;
+    }
+    m_CurrentPlugin = nullptr;
+
+    if (success < 0)
+    {
+        Com_PrintError("Plugin initialization failed: %d\n", success);
+        plugin.Unload();
+        return;
+    }
+    Com_DPrintf("done\n");
+
+
+    plugin.SetInitialized(true);
+    // At this point plugin successfully initialized and when at unloading it will fire "OnTerminate" event.
+    // Keep passed name as key instead of file path.
+    m_Plugins[LibName_] = plugin;
+    Com_Printf("Plugin loaded successfully. Server is currently running %d plugins\n", m_Plugins.size());
+}
+
+void CPluginHandler::UnloadPlugin(const char* LibName_)
+{
+    auto& plugin = m_Plugins.find(LibName_);
+    if (plugin == m_Plugins.end())
+    {
+        Com_Printf("Plugin '%s' is not loaded\n", LibName_);
+        return;
+    }
+    m_CurrentPlugin = &plugin;
+    plugin->second.Unload(); // May execute event.
+    m_CurrentPlugin = nullptr;
+
+    m_Plugins.erase(plugin);
+    Com_Printf("Plugin '%s' has been unloaded\n", LibName_);
+}
+
+void CPluginHandler::PrintPluginInfo(const char* LibName_)
+{
+    auto& plugin = m_Plugins.find(LibName_);
+    if (plugin == m_Plugins.end())
+    {
+        Com_Printf("Plugin '%s' is not loaded\n", LibName_);
+        return;
+    }
+    m_CurrentPlugin = &plugin;
+    plugin->second.PrintPluginInfo();
+    m_CurrentPlugin = nullptr;
+}
+
+void CPluginHandler::PrintPluginsSummary()
+{
+    int maj, min;
+    getVersion(maj, min);
+    Com_Printf("Plugin handler version: %d.%d\n\n", maj, min);
+
+    if (!m_Plugins.size())
+    {
+        Com_Printf("No plugins are loaded\n");
+        return;
+    }
+
+    Com_Printf("Loaded plugins:\n\n");
+    Com_Printf("+----------------------+----------+--------------------+----------------------+\n");
+    Com_Printf("|         name         | enabled? | memory allocations | total all. mem. in B |\n");
+    Com_Printf("+----------------------+----------+--------------------+----------------------+\n");
+    for (auto& itPlugin : m_Plugins)
+    {
+        const CPlugin& plugin = itPlugin.second;
+        Com_Printf("| %-21s| %-9s| %-19d| %-21d|\n", itPlugin.first, "yes", plugin.GetMemAllocs(), plugin.GetMemAllocsSize());
+    }
+    Com_Printf("+----------------------+----------+--------------------+----------------------+\n");
+}
+
+void* CPluginHandler::Malloc(size_t Size_)
+{
+    DURING_EVENT_ONLY_RET(nullptr);
+    return m_CurrentPlugin->Malloc(Size_);
+}
+
+void CPluginHandler::Free(const void* Ptr_)
+{
+    DURING_EVENT_ONLY();
+    m_CurrentPlugin->Free(Ptr_);
+}
+
+void CPluginHandler::AddConsoleCommand(const char* const Name_, xcommand_t fpCallback_, int Power_ /*= 0*/)
+{
+    DURING_EVENT_ONLY();
+    m_CurrentPlugin->AddConsoleCommand(Name_, fpCallback_, Power_);
+}
+
+void CPluginHandler::RemoveConsoleCommand(const char* const Name_)
+{
+    DURING_EVENT_ONLY();
+    m_CurrentPlugin->RemoveConsoleCommand(Name_);
+}
+
+bool CPluginHandler::isLegacyPlugin(const std::string& LibPath_) const
+{
+    // Do not test against name.
+    // If plugin's checksum known - we know this plugin and we can load it no matter what name is.
+    if (!com_securemode)
+        return true;
+
+    // Get hash of this file.
+    char pluginHash[128] = {'\0'};
+    int sizeOfHash = sizeof(pluginHash);
+    Sec_HashFile(SEC_HASH_TIGER, LibPath_.c_str(), pluginHash, &sizeOfHash, qfalse);
+
+    // Compare find file hash in the list of known plugins.
+    for (int i = 0; i < GetKnownPluginsCount(); ++i)
+    {
+        if (!memcmp(pluginHash, GetKnownPluginHash(i), sizeof(pluginHash)))
+            return true;
+    }
+
+    Com_PrintError("This plugin can not be loaded in secure mode\n");
+    return false;
+}
+
+void CPluginHandler::getVersion(int& Major_, int& Minor_) const
+{
+    Major_ = 4;
+    Minor_ = 0;
+}
+
+std::string CPluginHandler::getPluginFilePath(const char* LibName_) const
+{
+    Com_DPrintf("Checking if the plugin file exists and is of correct format...\n");
+    // TODO
+    #if 0
+    //Additional test if a file is there
+        realpath = (char *)PHandler_OpenTempFile(name, filepathbuf, sizeof(filepathbuf)); // Load a plugin, safe for use
+        if (realpath == NULL)
+        {
+            return;
+        }
+    #endif
+}

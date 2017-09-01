@@ -1,11 +1,8 @@
 #pragma once
 
-#include "../gentity.h" // gentity_t
-#include "../g_entity.h" // hitLocation_t
-
 // We want to execute event by unique ID and not by name so this enum is required.
 // If you editing this enum, look inside plugin_handler.c - there are mapping available.
-typedef enum PluginEvents
+enum EPluginEvent
 {
     PLUGINS_EVENTS_START = 0,
 
@@ -49,8 +46,8 @@ typedef enum PluginEvents
     PLUGINS_SCRIPT_ONPLAYERLASTSTAND,       // CodeCallback_PlayerLastStand executed.
 
     PLUGINS_EVENTS_COUNT
-} PluginEvents;
+};
 
 // Enum and string array are not bound to themselves so there may happen mismatches.
 // So this function required to map event ID to its name.
-const char* const GetEventName(PluginEvents EventIdx_);
+const char* const GetEventName(EPluginEvent EventIdx_);

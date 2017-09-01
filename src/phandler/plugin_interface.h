@@ -7,7 +7,7 @@
 #define PLUGINEVENT extern "C" __declspec(dllexport)
 
 PLUGINEVENT int OnInit();
-PLUGINEVENT void OnInfoRequest(pluginInfo_t *info);
+PLUGINEVENT void OnInfoRequest(SPluginInfo_t *info);
 PLUGINEVENT void OnUnload();
 PLUGINEVENT void OnPlayerDC(client_t *client, const char *reason);
 PLUGINEVENT void OnPlayerConnect(int clientnum, netadr_t *netaddress, char *pbguid, char *userinfo, int authstatus, char *deniedmsg, int deniedmsgbufmaxlen);

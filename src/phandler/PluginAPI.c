@@ -13,14 +13,45 @@
 #include "../httpftp.h"
 #include "../misc.h"
 
+// Helpers macro to save some space.
+#ifndef __FUNCTION_NAME__
+#ifdef WIN32   //WINDOWS
+    #define __FUNCTION_NAME__ __FUNCTION__
+#else          //*NIX
+    #define __FUNCTION_NAME__ __func__
+#endif
+#endif
+
+#define THREAD_UNSAFE() \
+    do { \
+        if (Sys_IsMainThread() == qfalse) \
+        { \
+            Com_PrintError("Attempting to execute non thread safe function '"__FUNCTION_NAME__"'\n"); \
+            return; \
+        } \
+    } while(0)
+
+#define THREAD_UNSAFE_RET(retVal) \
+    do { \
+        if (Sys_IsMainThread() == qfalse) \
+        { \
+            Com_PrintError("Attempting to execute non thread safe function '"__FUNCTION_NAME__"'\n"); \
+            return retVal; \
+        } \
+    } while(0)
+
+///////////////////////////////////////////////////////////////////////////
+// Exported functions definitions lower.                                 //
+// If function thread safe - it contains no "THREAD_UNSAFE*(...)" macro. //
+///////////////////////////////////////////////////////////////////////////
+
 void Plugin_Com_Printf(const char *fmt, ...)
 {
-    va_list va;
-    va_start(va, fmt);
-
     char buffer[1024];
-    vsnprintf(buffer, sizeof(buffer), fmt, va);
+    va_list va;
     
+    va_start(va, fmt);
+    Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
     Com_Printf(buffer);
@@ -28,12 +59,11 @@ void Plugin_Com_Printf(const char *fmt, ...)
 
 void Plugin_Com_PrintWarning(const char *fmt, ...)
 {
-    va_list va;
-    va_start(va, fmt);
-
     char buffer[1024];
-    vsnprintf(buffer, sizeof(buffer), fmt, va);
-    
+    va_list va;
+
+    va_start(va, fmt);
+    Q_vsnprintf(buffer, sizeof(buffer), fmt, va);    
     va_end(va);
 
     Com_PrintWarning(buffer);
@@ -41,12 +71,11 @@ void Plugin_Com_PrintWarning(const char *fmt, ...)
 
 void Plugin_Com_PrintError(const char *fmt, ...)
 {
-    va_list va;
-    va_start(va, fmt);
-
     char buffer[1024];
-    vsnprintf(buffer, sizeof(buffer), fmt, va);
-    
+    va_list va;
+
+    va_start(va, fmt);
+    Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
     Com_PrintError(buffer);
@@ -54,12 +83,11 @@ void Plugin_Com_PrintError(const char *fmt, ...)
 
 void Plugin_Com_DPrintf(const char *fmt, ...)
 {
-    va_list va;
-    va_start(va, fmt);
-
     char buffer[1024];
-    vsnprintf(buffer, sizeof(buffer), fmt, va);
-    
+    va_list va;
+
+    va_start(va, fmt);
+    Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
     Com_DPrintf(buffer);
@@ -67,22 +95,24 @@ void Plugin_Com_DPrintf(const char *fmt, ...)
 
 void Plugin_Com_RandomBytes(void *ptr, int len)
 {
+    THREAD_UNSAFE();
     Com_RandomBytes(ptr, len);
 }
 
 time_t Plugin_Com_GetRealtime()
 {
+    THREAD_UNSAFE_RET(0);
     return Com_GetRealtime();
 }
 
-void Plugin_SV_PrintAdministrativeLog( const char *fmt, ... )
+void Plugin_SV_PrintAdministrativeLog(const char *fmt, ...)
 {
-    va_list va;
-    va_start(va, fmt);
-
+    THREAD_UNSAFE();
     char buffer[1024];
-    vsnprintf(buffer, sizeof(buffer), fmt, va);
-    
+    va_list va;
+
+    va_start(va, fmt);
+    Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
     SV_PrintAdministrativeLog(buffer);
@@ -90,484 +120,577 @@ void Plugin_SV_PrintAdministrativeLog( const char *fmt, ... )
 
 void Plugin_SV_PlayerAddBanByip(netadr_t *remote, char *message, int expire)
 {
+    THREAD_UNSAFE();
     SV_PlayerAddBanByip(remote, message, expire);
 }
 
 void Plugin_SV_RemoveBanByip(netadr_t *remote)
 {
+    THREAD_UNSAFE();
     SV_RemoveBanByip(remote);
 }
 
 const char* Plugin_SV_WriteBanTimelimit(int timeleftminutes, char *outbuffer, int outbufferlen)
 {
+    THREAD_UNSAFE_RET(outbuffer);
     return SV_WriteBanTimelimit(timeleftminutes, outbuffer, outbufferlen);
 }
 
 const char* Plugin_SV_FormatBanMessage(int timeleftminutes, char *outbuffer, int outbufferlen, const char* reasonfmt, ...)
 {
-    va_list va;
-    va_start(va, reasonfmt);
-
+    THREAD_UNSAFE_RET(outbuffer);
     char buffer[1024];
-    vsnprintf(buffer, sizeof(buffer), reasonfmt, va);
-    
+    va_list va;
+
+    va_start(va, reasonfmt);
+    Q_vsnprintf(buffer, sizeof(buffer), reasonfmt, va);
     va_end(va);
+
     return SV_FormatBanMessage(timeleftminutes, outbuffer, outbufferlen, buffer);
 }
 
 void Plugin_SV_SApiSteamIDToString(uint64_t steamid, char* string, int length)
 {
+    THREAD_UNSAFE();
     SV_SApiSteamIDToString(steamid, string, length);
 }
 
 void Plugin_SV_SApiSteamIDTo64String(uint64_t steamid, char* string, int length)
 {
+    THREAD_UNSAFE();
     SV_SApiSteamIDTo64String(steamid, string, length);
 }
 
 uint64_t Plugin_SV_SApiStringToID(const char* steamidstring)
 {
+    THREAD_UNSAFE_RET(0);
     return SV_SApiStringToID(steamidstring);
 }
 
 qboolean Plugin_SV_SApiSteamIDIndividual(uint64_t steamid)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return SV_SApiSteamIDIndividual(steamid);
 }
-
+// TODO: continue thread safety from here.
 qboolean Plugin_SV_SApiSteamIDIndividualSteamOnly(uint64_t steamid)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return SV_SApiSteamIDIndividualSteamOnly(steamid);
 }
 
 void Plugin_Auth_AddCommandForClientToWhitelist(int clnum, const char* cmd)
 {
+    THREAD_UNSAFE();
     Auth_AddCommandForClientToWhitelist(clnum, cmd);
 }
 
 qboolean Plugin_Auth_CanPlayerUseCommand(unsigned int clnum, const char* cmd)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return Auth_CanPlayerUseCommand(clnum, cmd);
 }
 
 client_t* Plugin_SV_GetPlayerClByHandle(const char* handle)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return SV_GetPlayerClByHandle(handle);
 }
 
 const char* Plugin_SV_GetPlayerNameByHandle(const char* handle)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return SV_GetPlayerNameByHandle(handle);
 }
 
 uint64_t Plugin_SV_GetPlayerSteamIDByHandle(const char* handle)
 {
+    THREAD_UNSAFE_RET(0);
     return SV_GetPlayerSteamIDByHandle(handle);
 }
 
 void Plugin_SV_SetClientStat(int clientNum, int index, int value)
 {
+    THREAD_UNSAFE();
     SV_SetClientStat(clientNum, index, value);
 }
 
 int Plugin_SV_GetClientStat(int clientNum, int index)
 {
+    THREAD_UNSAFE_RET(0);
     return SV_GetClientStat(clientNum, index);
 }
 
 int Plugin_Cmd_GetInvokerClnum()
 {
+    THREAD_UNSAFE_RET(-1);
     return Cmd_GetInvokerClnum();
 }
 
 int Plugin_Cmd_GetInvokerPower()
 {
+    THREAD_UNSAFE_RET(0);
     return Cmd_GetInvokerPower();
 }
 
 uint64_t Plugin_Cmd_GetInvokerSteamID()
 {
+    THREAD_UNSAFE_RET(0);
     return Cmd_GetInvokerSteamID();
 }
 
 const char* Plugin_Cmd_GetInvokerName(char *buf, int len)
 {
+    THREAD_UNSAFE_RET(buf);
     return Cmd_GetInvokerName(buf, len);
 }
 
 char* Plugin_Cmd_Argv(int arg)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return Cmd_Argv(arg);
 }
 
 int Plugin_Cmd_Argc()
 {
+    THREAD_UNSAFE_RET(0);
     return Cmd_Argc();
 }
 
 char* Plugin_Cmd_Args(char* buff, int bufsize)
 {
+    THREAD_UNSAFE_RET(buff);
     return Cmd_Args(buff, bufsize);
 }
 
 const char* Plugin_Cvar_VariableStringBuffer(const char *var_name, char *buffer, int bufsize)
 {
+    THREAD_UNSAFE_RET(buffer);
     return Cvar_VariableStringBuffer(var_name, buffer, bufsize);
 }
 
 float Plugin_Cvar_VariableValue(const char *var_name)
 {
+    THREAD_UNSAFE_RET(0.0f);
     return Cvar_VariableValue(var_name);
 }
 
 int Plugin_Cvar_VariableIntegerValue(const char *var_name)
 {
+    THREAD_UNSAFE_RET(0);
     return Cvar_VariableIntegerValue(var_name);
 }
 
 qboolean Plugin_Cvar_VariableBooleanValue(const char *var_name)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return Cvar_VariableBooleanValue(var_name);
 }
 
 cvar_t* Plugin_Cvar_RegisterString(const char *var_name, const char *var_value, unsigned short flags, const char *var_description)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return Cvar_RegisterString(var_name, var_value, flags, var_description);
 }
 
 cvar_t* Plugin_Cvar_RegisterBool(const char *var_name, qboolean var_value, unsigned short flags, const char *var_description)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return Cvar_RegisterBool(var_name, var_value, flags, var_description);
 }
 
 cvar_t* Plugin_Cvar_RegisterInt(const char *var_name, int var_value, int min_value, int max_value, unsigned short flags, const char *var_description)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return Cvar_RegisterInt(var_name, var_value, min_value, max_value, flags, var_description);
 }
 
 cvar_t* Plugin_Cvar_RegisterFloat(const char *var_name, float var_value, float min_value, float max_value, unsigned short flags, const char *var_description)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return Cvar_RegisterFloat(var_name, var_value, min_value, max_value, flags, var_description);
 }
 
 void Plugin_Cvar_SetInt(cvar_t* var, int val)
 {
+    THREAD_UNSAFE();
     Cvar_SetInt(var, val);
 }
 
 void Plugin_Cvar_SetBool(cvar_t* var, qboolean val)
 {
+    THREAD_UNSAFE();
     Cvar_SetBool(var, val);
 }
 
 void Plugin_Cvar_SetString(cvar_t* var, char const* string)
 {
+    THREAD_UNSAFE();
     Cvar_SetString(var, string);
 }
 
 void Plugin_Cvar_SetFloat(cvar_t* var, float val)
 {
+    THREAD_UNSAFE();
     Cvar_SetFloat(var, val);
 }
 
 void Plugin_Cvar_Set(const char *var_name, const char *value)
 {
+    THREAD_UNSAFE();
     Cvar_Set(var_name, value);
 }
 
 fileHandle_t Plugin_FS_FOpenFileWrite(const char* filename)
 {
+    THREAD_UNSAFE_RET(-1);
     return FS_FOpenFileWrite(filename);
 }
 
 long Plugin_FS_FOpenFileRead(const char* filename, fileHandle_t* returnhandle)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_FOpenFileRead(filename, returnhandle);
 }
 
 fileHandle_t Plugin_FS_FOpenFileAppend(const char* filename)
 {
+    THREAD_UNSAFE_RET(-1);
     return FS_FOpenFileAppend(filename);
 }
 
 long Plugin_FS_SV_FOpenFileRead(const char *filename, fileHandle_t *fp)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_SV_FOpenFileRead(filename, fp);
 }
 
 fileHandle_t Plugin_FS_SV_FOpenFileWrite(const char *filename)
 {
+    THREAD_UNSAFE_RET(-1);
     return FS_SV_FOpenFileWrite(filename);
 }
 
 fileHandle_t Plugin_FS_SV_FOpenFileAppend(const char *filename)
 {
+    THREAD_UNSAFE_RET(-1);
     return FS_SV_FOpenFileAppend(filename);
 }
 
 int Plugin_FS_Read(void* data, int length, fileHandle_t fh)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_Read(data, length, fh);
 }
 
 int Plugin_FS_ReadFile(const char *qpath, void **buffer)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_ReadFile(qpath, buffer);
 }
 
 void Plugin_FS_FreeFile(void *buffer)
 {
+    THREAD_UNSAFE();
     FS_FreeFile(buffer);
 }
 
 int Plugin_FS_ReadLine(void *buffer, int len, fileHandle_t fh)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_ReadLine(buffer, len, fh);
 }
 
 int Plugin_FS_Write(const void *buffer, int len, fileHandle_t fh)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_Write(buffer, len, fh);
 }
 
 int Plugin_FS_WriteFile(const char *qpath, const void *buffer, int size)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_WriteFile(qpath, buffer, size);
 }
 
 qboolean Plugin_FS_FCloseFile(fileHandle_t fh)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return FS_FCloseFile(fh);
 }
 
 int Plugin_FS_SV_HomeWriteFile(const char *qpath, const void *buffer, int size)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_SV_HomeWriteFile(qpath, buffer, size);
 }
 
 int Plugin_FS_SV_BaseWriteFile(const char *qpath, const void *buffer, int size)
 {
+    THREAD_UNSAFE_RET(0);
     return FS_SV_BaseWriteFile(qpath, buffer, size);
 }
 
 void Plugin_FS_SV_HomeCopyFile(char* from, char* to)
 {
+    THREAD_UNSAFE();
     FS_SV_HomeCopyFile(from, to);
 }
 
 int Plugin_NET_StringToAdr(const char *s, netadr_t *a, netadrtype_t family)
 {
+    THREAD_UNSAFE_RET(0);
     return NET_StringToAdr(s, a, family);
 }
 
 const char* Plugin_NET_AdrToString(netadr_t *a)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return NET_AdrToString(a);
 }
 
 const char* Plugin_NET_AdrToStringMT(netadr_t *a, char *buf, int len)
 {
+    THREAD_UNSAFE_RET(buf);
     return NET_AdrToStringMT(a, buf, len);
 }
 
 const char* Plugin_NET_AdrToStringShort(netadr_t *a)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return NET_AdrToStringShort(a);
 }
 
 const char* Plugin_NET_AdrToStringShortMT(netadr_t *a, char* buf, int len)
 {
+    THREAD_UNSAFE_RET(buf);
     return NET_AdrToStringShortMT(a, buf, len);
 }
 
 const char* Plugin_NET_AdrMaskToStringMT(netadr_t *a, char* buf, int len)
 {
+    THREAD_UNSAFE_RET(buf);
     return NET_AdrMaskToStringMT(a, buf, len);
 }
 
 qboolean Plugin_NET_CompareBaseAdrMask(netadr_t *a, netadr_t *b, int netmask)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return NET_CompareBaseAdrMask(a, b, netmask);
 }
 
 qboolean Plugin_NET_CompareBaseAdr(netadr_t *a, netadr_t *b)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return NET_CompareBaseAdr(a, b);
 }
 
 qboolean Plugin_NET_CompareAdr(netadr_t *a, netadr_t *b)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return NET_CompareAdr(a, b);
 }
 
 unsigned int Plugin_Sys_Milliseconds()
 {
+    THREAD_UNSAFE_RET(0);
     return Sys_Milliseconds();
 }
 
 void Plugin_Sys_SleepSec(int seconds)
 {
+    THREAD_UNSAFE();
     Sys_SleepSec(seconds);
 }
 
 void Plugin_Sys_SleepMSec(int msec)
 {
+    THREAD_UNSAFE();
     Sys_SleepMSec(msec);
 }
 
 void Plugin_Scr_AddEntity(gentity_t* ent)
 {
+    THREAD_UNSAFE();
     Scr_AddEntity(ent);
 }
 
 int Plugin_Scr_AllocArray()
 {
+    THREAD_UNSAFE_RET(0);
     return Scr_AllocArray();
 }
 
 int Plugin_Scr_GetNumParam()
 {
+    THREAD_UNSAFE_RET(0);
     return Scr_GetNumParam();
 }
 
 int Plugin_Scr_GetInt(unsigned int arg)
 {
+    THREAD_UNSAFE_RET(0);
     return Scr_GetInt(arg);
 }
 
 float Plugin_Scr_GetFloat(unsigned int arg)
 {
+    THREAD_UNSAFE_RET(0.0f);
     return Scr_GetFloat(arg);
 }
 
 char* Plugin_Scr_GetString(unsigned int arg)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return Scr_GetString(arg);
 }
 
 gentity_t* Plugin_Scr_GetEntity(unsigned int arg)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return Scr_GetEntity(arg);
 }
 
 short Plugin_Scr_GetConstString(unsigned int arg)
 {
+    THREAD_UNSAFE_RET(0);
     return Scr_GetConstString(arg);
 }
 
 unsigned int Plugin_Scr_GetType(unsigned int arg)
 {
+    THREAD_UNSAFE_RET(0);
     return Scr_GetType(arg);
 }
 
 void Plugin_Scr_GetVector(unsigned int arg, float* vec)
 {
+    THREAD_UNSAFE();
     Scr_GetVector(arg, vec);
 }
 
 void Plugin_Scr_Error(const char *string)
 {
+    THREAD_UNSAFE();
     Scr_Error(string);
 }
 
 void Plugin_Scr_ParamError(int paramNum, const char *string)
 {
+    THREAD_UNSAFE();
     Scr_ParamError(paramNum, string);
 }
 
 void Plugin_Scr_ObjectError(const char *string)
 {
+    THREAD_UNSAFE();
     Scr_ObjectError(string);
 }
 
 void Plugin_Scr_AddInt(int value)
 {
+    THREAD_UNSAFE();
     Scr_AddInt(value);
 }
 
 void Plugin_Scr_AddFloat(float value)
 {
+    THREAD_UNSAFE();
     Scr_AddFloat(value);
 }
 
 void Plugin_Scr_AddBool(qboolean value)
 {
+    THREAD_UNSAFE();
     Scr_AddBool(value);
 }
 
 void Plugin_Scr_AddString(const char *string)
 {
+    THREAD_UNSAFE();
     Scr_AddString(string);
 }
 
 void Plugin_Scr_AddUndefined()
 {
+    THREAD_UNSAFE();
     Scr_AddUndefined();
 }
 
 void Plugin_Scr_AddVector(vec3_t vec)
 {
+    THREAD_UNSAFE();
     Scr_AddVector(vec);
 }
 
 void Plugin_Scr_AddArray()
 {
+    THREAD_UNSAFE();
     Scr_AddArray();
 }
 
 void Plugin_Scr_MakeArray()
 {
+    THREAD_UNSAFE();
     Scr_MakeArray();
 }
 
 void Plugin_Scr_AddArrayKey(int strIdx)
 {
+    THREAD_UNSAFE();
     Scr_AddArrayKey(strIdx);
 }
 
 short Plugin_Scr_ExecEntThread(gentity_t *ent, int callbackHook, unsigned int numArgs)
 {
+    THREAD_UNSAFE_RET(0);
     return Scr_ExecEntThread(ent, callbackHook, numArgs);
 }
 
 short Plugin_Scr_ExecThread(int callbackHook, unsigned int numArgs)
 {
+    THREAD_UNSAFE_RET(0);
     return Scr_ExecThread(callbackHook, numArgs);
 }
 
 void Plugin_Scr_FreeThread(short threadId)
 {
+    THREAD_UNSAFE();
     Scr_FreeThread(threadId);
 }
 
 void Plugin_Scr_Notify(gentity_t *ent, unsigned short constString, unsigned int numArgs)
 {
+    THREAD_UNSAFE();
     Scr_Notify(ent, constString, numArgs);
 }
 
 void Plugin_Scr_NotifyNum(int entityNum, unsigned int entType, unsigned int constString, unsigned int numArgs)
 {
+    THREAD_UNSAFE();
     Scr_NotifyNum(entityNum, entType, constString, numArgs);
 }
 
 void Plugin_Scr_NotifyLevel(int constString, unsigned int numArgs)
 {
+    THREAD_UNSAFE();
     Scr_NotifyLevel(constString, numArgs);
 }
 
 int Plugin_Scr_AllocString(const char* string)
 {
+    THREAD_UNSAFE_RET(0);
     return Scr_AllocString(string);
 }
 
 void Plugin_G_LogPrintf(const char *fmt, ...)
 {
-    va_list va;
-    va_start(va, fmt);
-
+    THREAD_UNSAFE();
     char buffer[1024];
-    vsnprintf(buffer, sizeof(buffer), fmt, va);
-    
+    va_list va;
+
+    va_start(va, fmt);
+    Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
     G_LogPrintf(buffer);
@@ -575,80 +698,73 @@ void Plugin_G_LogPrintf(const char *fmt, ...)
 
 playerState_t* Plugin_SV_GameClientNum(int num)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return SV_GameClientNum(num);
 }
 
 int Plugin_unzSetPassword(unzFile file, const char* password)
 {
+    THREAD_UNSAFE_RET(0);
     return unzSetPassword(file, password);
 }
 
 void Plugin_Cbuf_AddText(const char* text)
 {
+    THREAD_UNSAFE();
     Cbuf_AddText(text);
 }
 
 void Plugin_SV_GetConfigstring(int index, char *buffer, int bufferSize)
 {
+    THREAD_UNSAFE();
     SV_GetConfigstring(index, buffer, bufferSize);
 }
 
 void Plugin_SV_SetConfigstring(int index, const char *text)
 {
+    THREAD_UNSAFE();
     SV_SetConfigstring(index, text);
 }
 
 char* Plugin_SL_ConvertToString(unsigned int index)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return SL_ConvertToString(index);
 }
 
 void Plugin_HTTP_CreateString_x_www_form_urlencoded(char* outencodedstring, int len, const char* key, const char *value)
 {
+    THREAD_UNSAFE();
     HTTP_CreateString_x_www_form_urlencoded(outencodedstring, len, key, value);
 }
 
 void Plugin_HTTP_ParseFormDataBody(char* body, httpPostVals_t* values)
 {
+    THREAD_UNSAFE();
     HTTP_ParseFormDataBody(body, values);
 }
 
 const char* Plugin_HTTP_GetFormDataItem(httpPostVals_t* values, const char* search)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return HTTP_GetFormDataItem(values, search);
 }
 
-void *Plugin_Malloc(size_t size)
+void* Plugin_Malloc(size_t size)
 {
-    volatile int pID;
-    //Identify the calling plugin
-    pID = PHandler_CallerID();
-    if (pID < 0)
-    {
-        Com_Printf("Plugins: Error! Tried allocating memory for unknown plugin!\n");
-        return NULL;
-    }
-    if (pluginFunctions.plugins[pID].enabled == qfalse)
-    {
-        Com_Printf("^1WARNING^7: Tried allocating memory for a disabled plugin!\n");
-    }
-    return PHandler_Malloc(pID, size);
+    THREAD_UNSAFE_RET(nullptr);
+    return PluginHandler()->Malloc(size);
 }
 
 void Plugin_Free(void *ptr)
 {
-    //Identify the calling plugin
-    volatile int pID = PHandler_CallerID();
-    if (pID < 0)
-    {
-        Com_Printf("Plugins: Error! Tried freeing memory for unknown plugin!\n");
-        return;
-    }
-    PHandler_Free(pID, ptr);
+    THREAD_UNSAFE();
+    PluginHandler()->Free(ptr);
 }
 
 void Plugin_Error(EPluginError_t code, const char *fmt, ...)
 {
+    THREAD_UNSAFE();
     va_list argptr;
     char msg[1024];
 
@@ -666,83 +782,46 @@ void Plugin_Error(EPluginError_t code, const char *fmt, ...)
 
     PHandler_Error(pID, code, msg);
 }
-// TODO: main thread only.
+
 void Plugin_Cmd_AddPCommand(const char *cmd_name, xcommand_t function, int power)
 {
-    volatile int pID;
-    pID = PHandler_CallerID();
-    if (pID >= MAX_PLUGINS)
-    {
-        Com_PrintError("Tried adding a command for a plugin with non existent pID. pID supplied: %d.\n", pID);
-        return;
-    }
-    else if (pID < 0)
-    {
-        Com_PrintError("Plugin_AddCommand called from not within a plugin or from a disabled plugin!\n");
-        return;
-    }
-    if (!pluginFunctions.plugins[pID].loaded)
-    {
-        Com_PrintError("Tried adding a command for not loaded plugin! PID: %d.\n", pID);
-        return;
-    }
-
-    Com_DPrintf("Adding a plugin command for plugin %d, command name: %s.\n", pID, cmd_name);
-    Cmd_AddCommand(cmd_name, PHandler_CmdExecute_f);
-    Cmd_SetPower(cmd_name, power);
-    pluginFunctions.plugins[pID].cmd[pluginFunctions.plugins[pID].cmds].xcommand = function;
-    strcpy(pluginFunctions.plugins[pID].cmd[pluginFunctions.plugins[pID].cmds++].name, cmd_name);
-    Com_DPrintf("Command added.\n");
+    THREAD_UNSAFE();
+    PluginHandler()->AddConsoleCommand(cmd_name, function, power);
 }
-// TODO: main thread only.
+
 void Plugin_Cmd_RemoveCommand(const char *cmd_name)
 {
-    volatile int pID;
-    pID = PHandler_CallerID();
-    if (pID >= MAX_PLUGINS)
-    {
-        Com_PrintError("Tried removing a command for a plugin with non existent pID. pID supplied: %d.\n", pID);
-        return;
-    }
-    else if (pID < 0)
-    {
-        Com_PrintError("Plugin_RemoveCommand called from not within a plugin or from a disabled plugin!\n");
-        return;
-    }
-
-    if (!pluginFunctions.plugins[pID].loaded)
-    {
-        Com_PrintError("Tried removing a command for not loaded plugin! PID: %d.\n", pID);
-        return;
-    }
-    
-    Com_DPrintf("Remove a plugin command for plugin %d, command name: %s.\n", pID, cmd_name);
-    Cmd_RemoveCommand(cmd_name);
-    Com_DPrintf("Command removed.\n");
+    THREAD_UNSAFE();
+    PluginHandler()->RemoveConsoleCommand(cmd_name);
 }
 
 qboolean Plugin_TcpConnect(int connection, const char *remote)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return PHandler_TcpConnectMT(PHandler_CallerID(), connection, remote);
 }
 
 int Plugin_TcpGetData(int connection, void *buf, int size)
 {
+    THREAD_UNSAFE_RET(0);
     return PHandler_TcpGetDataMT(PHandler_CallerID(), connection, buf, size);
 }
 
 qboolean Plugin_TcpSendData(int connection, void *data, int len)
 {
+    THREAD_UNSAFE_RET(qfalse);
     return PHandler_TcpSendDataMT(PHandler_CallerID(), connection, data, len);
 }
 
 void Plugin_TcpCloseConnection(int connection)
 {
+    THREAD_UNSAFE();
     PHandler_TcpCloseConnectionMT(PHandler_CallerID(), connection);
 }
 
 qboolean Plugin_UdpSendData(netadr_t *to, void *data, int len)
 {
+    THREAD_UNSAFE_RET(qfalse);
     int pID;
 
     if (to == NULL)
@@ -768,6 +847,7 @@ qboolean Plugin_UdpSendData(netadr_t *to, void *data, int len)
 
 void Plugin_ServerPacketEvent(netadr_t *to, void *data, int len)
 {
+    THREAD_UNSAFE();
     msg_t msg;
     msg.data = data;
     msg.cursize = len;
@@ -781,6 +861,7 @@ void Plugin_ServerPacketEvent(netadr_t *to, void *data, int len)
 
 uint64_t Plugin_GetPlayerSteamID(unsigned int clientslot)
 {
+    THREAD_UNSAFE_RET(0);
     client_t *cl;
     int PID = PHandler_CallerID();
     mvabuf;
@@ -795,6 +876,7 @@ uint64_t Plugin_GetPlayerSteamID(unsigned int clientslot)
 
 uint64_t Plugin_GetPlayerID(unsigned int clientslot)
 {
+    THREAD_UNSAFE_RET(0);
     client_t *cl;
     int PID = PHandler_CallerID();
     mvabuf;
@@ -807,18 +889,21 @@ uint64_t Plugin_GetPlayerID(unsigned int clientslot)
     return cl->playerid;
 }
 
-int Plugin_GetLevelTime(void)
+int Plugin_GetLevelTime()
 {
+    THREAD_UNSAFE_RET(0);
     return level.time;
 }
 
-int Plugin_GetServerTime(void)
+int Plugin_GetServerTime()
 {
+    THREAD_UNSAFE_RET(0);
     return svs.time;
 }
 
 void Plugin_Scr_AddFunction(char *name, xfunction_t function)
 {
+    THREAD_UNSAFE();
     int PID = PHandler_CallerID();
 
     PHandler_Scr_AddFunction(name, function, qfalse, PID);
@@ -826,6 +911,7 @@ void Plugin_Scr_AddFunction(char *name, xfunction_t function)
 
 void Plugin_Scr_AddMethod(char *name, xfunction_t function)
 {
+    THREAD_UNSAFE();
     int PID = PHandler_CallerID();
 
     PHandler_Scr_AddMethod(name, function, qfalse, PID);
@@ -833,6 +919,7 @@ void Plugin_Scr_AddMethod(char *name, xfunction_t function)
 
 void Plugin_Scr_ReplaceFunction(char *name, xfunction_t function)
 {
+    THREAD_UNSAFE();
     int PID = PHandler_CallerID();
 
     PHandler_Scr_AddFunction(name, function, qtrue, PID);
@@ -840,6 +927,7 @@ void Plugin_Scr_ReplaceFunction(char *name, xfunction_t function)
 
 void Plugin_Scr_ReplaceMethod(char *name, xfunction_t function)
 {
+    THREAD_UNSAFE();
     int PID = PHandler_CallerID();
 
     PHandler_Scr_AddMethod(name, function, qtrue, PID);
@@ -847,6 +935,7 @@ void Plugin_Scr_ReplaceMethod(char *name, xfunction_t function)
 
 void Plugin_ChatPrintf(int slot, const char *fmt, ...)
 {
+    THREAD_UNSAFE();
     char str[256];
     client_t *cl;
     va_list vl;
@@ -866,6 +955,7 @@ void Plugin_ChatPrintf(int slot, const char *fmt, ...)
 
 void Plugin_BoldPrintf(int slot, const char *fmt, ...)
 {
+    THREAD_UNSAFE();
     char str[256];
     client_t *cl;
     va_list vl;
@@ -885,6 +975,7 @@ void Plugin_BoldPrintf(int slot, const char *fmt, ...)
 
 int Plugin_Dvar_GetInteger(void *cvar)
 {
+    THREAD_UNSAFE_RET(0);
     cvar_t *var = cvar;
     int PID = PHandler_CallerID();
     int v;
@@ -908,6 +999,7 @@ int Plugin_Dvar_GetInteger(void *cvar)
 
 qboolean Plugin_Dvar_GetBoolean(void *cvar)
 {
+    THREAD_UNSAFE_RET(qfalse);
     cvar_t *var = cvar;
     qboolean b;
     int PID = PHandler_CallerID();
@@ -932,6 +1024,7 @@ qboolean Plugin_Dvar_GetBoolean(void *cvar)
 
 float Plugin_Dvar_GetValue(void *cvar)
 {
+    THREAD_UNSAFE_RET(0.0f);
     cvar_t *var = cvar;
     float v;
     int PID = PHandler_CallerID();
@@ -957,6 +1050,7 @@ float Plugin_Dvar_GetValue(void *cvar)
 
 const char *Plugin_Dvar_GetString(void *cvar, char *buf, int sizebuf)
 {
+    THREAD_UNSAFE_RET(buf);
     cvar_t *var = cvar;
     int PID = PHandler_CallerID();
 
@@ -981,6 +1075,7 @@ const char *Plugin_Dvar_GetString(void *cvar, char *buf, int sizebuf)
 
 void Plugin_SV_DropClient(unsigned int clientnum, const char *reason)
 {
+    THREAD_UNSAFE();
     if (clientnum > sv_maxclients->integer)
         return;
 
@@ -989,7 +1084,7 @@ void Plugin_SV_DropClient(unsigned int clientnum, const char *reason)
 
 void Plugin_BanClient(unsigned int clientnum, int duration, int invokerid, char *banreason)
 {
-
+    THREAD_UNSAFE();
     client_t *cl;
     time_t expire;
     char *temp;
@@ -1065,21 +1160,25 @@ void Plugin_BanClient(unsigned int clientnum, int duration, int invokerid, char 
 
 gentity_t *Plugin_GetGentityForEntityNum(int entnum)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return &g_entities[entnum];
 }
 
 client_t *Plugin_GetClientForClientNum(int clientnum)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return &svs.clients[clientnum];
 }
 
 int Plugin_HTTP_SendReceiveData(ftRequest_t *request)
 {
+    THREAD_UNSAFE_RET(0);
     return HTTP_SendReceiveData(request);
 }
 
 ftRequest_t *Plugin_HTTP_MakeHttpRequest(const char *url, const char *method, byte *requestpayload, int payloadlen, const char *additionalheaderlines)
 {
+    THREAD_UNSAFE_RET(nullptr);
     ftRequest_t *curfileobj;
     msg_t msgdata;
     msg_t *msg;
@@ -1113,6 +1212,7 @@ ftRequest_t *Plugin_HTTP_MakeHttpRequest(const char *url, const char *method, by
 /* blocking */
 ftRequest_t *Plugin_HTTP_Request(const char *url, const char *method, byte *requestpayload, int payloadlen, const char *additionalheaderlines)
 {
+    THREAD_UNSAFE_RET(nullptr);
     ftRequest_t *curfileobj;
     int transret;
     msg_t msgdata;
@@ -1159,11 +1259,13 @@ ftRequest_t *Plugin_HTTP_Request(const char *url, const char *method, byte *requ
 /* blocking */
 ftRequest_t *Plugin_HTTP_GET(const char *url)
 {
+    THREAD_UNSAFE_RET(nullptr);
     return Plugin_HTTP_Request(url, "GET", NULL, 0, NULL);
 }
 
 void Plugin_HTTP_FreeObj(ftRequest_t *request)
 {
+    THREAD_UNSAFE();
     FileDownloadFreeRequest(request);
 }
 /*
@@ -1384,9 +1486,3 @@ qboolean Plugin_CreateCallbackThread(void *threadMain, ...)
     return success;
 }
 */
-
-int Plugin_GetPluginID() //Only from mainthread callable
-{
-    int PID = PHandler_CallerID();
-    return PID;
-}

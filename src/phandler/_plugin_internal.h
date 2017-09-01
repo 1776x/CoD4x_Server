@@ -191,9 +191,6 @@ extern pluginScriptCallStubBase_t pluginScriptCallStubs;
 // --------------------------------//
 //  Plugin Handler's own functions //
 // --------------------------------//
-void PHandler_Load(char *);
-void PHandler_Unload(int id);
-void PHandler_UnloadByName(const char *name);
 int PHandler_GetID(const char *name);
 void PHandler_Event(PluginEvents Event_, ...);
 void PHandler_Init();
@@ -218,10 +215,6 @@ void PHandler_TcpCloseConnectionMT(int pID, int connection);
 //  Plugin Handler's own server commands //
 // --------------------------------------//
 
-void PHandler_LoadPlugin_f(void);
-void PHandler_UnLoadPlugin_f(void);
-void PHandler_PluginList_f(void);
-void PHandler_PluginInfo_f(void);
 //void Plugin_RunThreadCallbacks();
 
 /*

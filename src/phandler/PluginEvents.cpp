@@ -1,4 +1,4 @@
-#include "phandler_events.h"
+#include "PluginEvents.h"
 
 static struct PluginEventsInfo_t
 {
@@ -45,7 +45,9 @@ static struct PluginEventsInfo_t
     {PLUGINS_SCRIPT_ONPLAYERLASTSTAND, "OnScript_PlayerLastStand"}
 };
 
-const char* const GetEventName(PluginEvents EventIdx_)
+const char* const GetEventName(EPluginEvent EventIdx_)
 {
+    if (EventIdx_ < PLUGINS_EVENTS_START || EventIdx_ >= PLUGINS_EVENTS_COUNT)
+        return nullptr;
     return g_PluginEventsInfo[EventIdx_].CallbackName;
 }

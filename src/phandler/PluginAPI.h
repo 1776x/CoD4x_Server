@@ -36,7 +36,8 @@
 // Function name aliases section.
 // I'm tired of using 'Plugin_*()' calls.
 // Purpose: export function called "Plugin_<funcName>()", but in code you can use "<funcName>()"
-//   which transforms into "Plugin_<funcName>()" call using these definitions.
+//   inside plugin code which transforms into "Plugin_<funcName>()" call using these definitions.
+// You have to "#define USE_LEGACY_NAMES" before including this file in plugin source code.
 #ifndef PLUGINEXPORT
 #ifdef USE_LEGACY_NAMES
 #define Com_Printf Plugin_Com_Printf
@@ -194,9 +195,8 @@
 #define SetupThreadCallback Plugin_SetupThreadCallback
 #define CreateCallbackThread Plugin_CreateCallbackThread
 */
-#define GetPluginID Plugin_GetPluginID
 #endif //USE_LEGACY_NAMES
-#endif //!PLUGINEXPORT
+#endif //notdef PLUGINEXPORT
 
 // Import/export functions section.
 PLUGINAPI void Plugin_Com_Printf(const char *fmt, ...);
@@ -370,5 +370,3 @@ PLUGINAPI void Plugin_HTTP_FreeObj(ftRequest_t *request);
 //PLUGINAPI void Plugin_RunThreadCallbacks();
 //PLUGINAPI qboolean Plugin_SetupThreadCallback(void *callbackMain, ...);
 //PLUGINAPI qboolean Plugin_CreateCallbackThread(void *threadMain, ...);
-
-PLUGINAPI int Plugin_GetPluginID(); //Only from mainthread callable

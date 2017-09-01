@@ -33,7 +33,7 @@ static int serverport;
 static int globaloptions;
 
 
-PCL void OnInfoRequest(pluginInfo_t *info){	// Function used to obtain information about the plugin
+PCL void OnInfoRequest(SPluginInfo_t *info){	// Function used to obtain information about the plugin
     // Memory pointed by info is allocated by the server binary, just fill in the fields
 
     // =====  MANDATORY FIELDS  =====

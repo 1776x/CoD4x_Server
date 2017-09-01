@@ -87,7 +87,7 @@ PCL void OnMessageSent(char *message,int slot, qboolean *show, int type){
 	    Plugin_ChatPrintf(slot,"^2AntiSpam: you can send next chat message in %d seconds.",60 - t - data.players[slot].messages[0]);
 	}
 }
-PCL void OnInfoRequest(pluginInfo_t *info){	// Function used to obtain information about the plugin
+PCL void OnInfoRequest(SPluginInfo_t *info){	// Function used to obtain information about the plugin
     // Memory pointed by info is allocated by the server binary, just fill in the fields
 
     // =====  MANDATORY FIELDS  =====

@@ -3,7 +3,7 @@ module cod4x.callback_declarations;
 import cod4x.structs;
 import cod4x.server;
 
-extern (C) void OnInfoRequest(pluginInfo_t *info);
+extern (C) void OnInfoRequest(SPluginInfo_t *info);
 extern (C) int  OnInit();
 extern (C) void OnMessageSent(char* message, int slot, qboolean *show, int mode);
 extern (C) void OnPreFastRestart();

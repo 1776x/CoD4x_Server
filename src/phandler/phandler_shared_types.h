@@ -1,7 +1,8 @@
+#pragma once
+
 ///////////////////////////////////////////////////////////////////
 // This file contains types for both plugins and plugin handler. //
 ///////////////////////////////////////////////////////////////////
-#pragma once
 
 #include "../version.h"
 
@@ -15,11 +16,11 @@ typedef enum EPluginError_t
 #define PLUGIN_HANDLER_VERSION_MAJOR 3
 #define PLUGIN_HANDLER_VERSION_MINOR 200
 
-typedef struct pluginInfo_t
+typedef struct SPluginInfo_t
 {                               // To be used in OnInfoRequest
     version_t handlerVersion;   // Requested plugin handler version - mandatory field
     version_t pluginVersion;    // Version of your plugin - optional
     char fullName[64];          // Full plugin name, short name is the filename without extension - optional
     char shortDescription[128]; // Describe in a few words what this plugin does - optional
     char longDescription[1024]; // Full description - optional
-} pluginInfo_t;
+} SPluginInfo_t;

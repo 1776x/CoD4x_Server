@@ -14,11 +14,11 @@
 #include "../misc.h"
 
 // Helpers macro to save some space.
-#ifndef __FUNCTION_NAME__
+#ifndef FUNCTION_NAME
 #ifdef WIN32   //WINDOWS
-    #define __FUNCTION_NAME__ __FUNCTION__
+    #define FUNCTION_NAME (__FUNCTION__)
 #else          //*NIX
-    #define __FUNCTION_NAME__ __func__
+    #define FUNCTION_NAME (__func__)
 #endif
 #endif
 
@@ -26,7 +26,7 @@
     do { \
         if (Sys_IsMainThread() == qfalse) \
         { \
-            Com_PrintError("Attempting to execute non thread safe function '"__FUNCTION_NAME__"'\n"); \
+            Com_PrintError("Attempting to execute non thread safe function '%s'\n", FUNCTION_NAME); \
             return; \
         } \
     } while(0)
@@ -35,7 +35,7 @@
     do { \
         if (Sys_IsMainThread() == qfalse) \
         { \
-            Com_PrintError("Attempting to execute non thread safe function '"__FUNCTION_NAME__"'\n"); \
+            Com_PrintError("Attempting to execute non thread safe function '%s'\n", FUNCTION_NAME); \
             return retVal; \
         } \
     } while(0)

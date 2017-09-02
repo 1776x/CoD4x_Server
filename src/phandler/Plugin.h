@@ -15,6 +15,9 @@ public:
     CPlugin(const CPlugin&) = delete;
     void operator=(const CPlugin&) = delete;
 
+    // ... but can be moved.
+    CPlugin(CPlugin&& From_);
+
     ////////////////////////////////////////////////
     // Loads plugin from file specified by LibPath_.
     void LoadFromFile(const std::string& LibPath_);
@@ -52,7 +55,7 @@ public:
         if (!m_Events[idx])
             return false;
 
-        (*m_Events[idx])(Params...);
+        (reinterpret_cast<void(__cdecl *)(PTypes...)>(m_Events[idx]))(Params...);
         return true;
     }
 

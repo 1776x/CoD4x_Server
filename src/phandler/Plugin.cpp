@@ -21,6 +21,11 @@ CPlugin::~CPlugin()
     Unload();
 }
 
+CPlugin::CPlugin(CPlugin&& From_)
+{
+    // Always TODO: If you adding fields to this class, do not forget to add it here.
+}
+
 void CPlugin::LoadFromFile(const std::string &LibPath_)
 {
     // We can't rely on filename, only it's hash.
@@ -198,7 +203,7 @@ void CPlugin::RemoveConsoleCommand(const char* const Name_)
 void CPlugin::freeAllocatedMemory()
 {
     for (auto pMem : m_MemStorage)
-        delete[] pMem;
+        free(pMem);
 
     m_MemStorage.clear();
     m_MemAllocs = 0;

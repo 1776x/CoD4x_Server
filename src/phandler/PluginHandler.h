@@ -1,5 +1,6 @@
 #pragma once
 #include "Plugin.h"
+#include "../qcommon_io.h"
 #include <map>
 #include <string>
 
@@ -43,8 +44,8 @@ public:
 
     /////////////////////
     // Fire plugin event.
-    template<typename... Params>
-    void PluginEvent(EPluginEvent Event_, Params...)
+    template<class...TParms>
+    void PluginEvent(EPluginEvent Event_, TParms...Params)
     {
         if (Event_ < PLUGINS_EVENTS_START || Event_ >= PLUGINS_EVENTS_COUNT)
         {
@@ -52,10 +53,10 @@ public:
             return;
         }
 
-        foreach(auto& plugin : m_Plugins)
+        for(auto& plugin : m_Plugins)
         {
-            m_CurrentPlugin = &plugin;
-            plugin.Event(Event_, Params...);
+            m_CurrentPlugin = &plugin.second;
+            m_CurrentPlugin->Event(Event_, Params...);
         }
         m_CurrentPlugin = nullptr;
     }

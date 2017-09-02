@@ -1,33 +1,37 @@
 #include "PluginHandler.h"
 #include "KnownPlugins.h"
 #include "PHandlerCmds.h"
+#include "../cmd.h"
+#include "../qcommon.h"
+#include "../sec_crypto.h"
+#include "phandler_shared_types.h"
 
 using namespace std;
 
-#ifndef __FUNCTION_NAME__
+#ifndef FUNCTION_NAME
 #ifdef WIN32   //WINDOWS
-    #define __FUNCTION_NAME__ __FUNCTION__
+#define FUNCTION_NAME (__FUNCTION__)
 #else          //*NIX
-    #define __FUNCTION_NAME__ __func__
+#define FUNCTION_NAME (__func__)
 #endif
 #endif
 
 #define DURING_EVENT_ONLY() \
     do { \
-        if (!m_CurrentPlugin)
-        {
-            Com_PrintError("Attempt to call function '"__FUNCTION_NAME__"' outside of plugin event\n");
-            return;
-        }
+        if (!m_CurrentPlugin) \
+        { \
+            Com_PrintError("Attempt to call function '%s' outside of plugin event\n", FUNCTION_NAME); \
+            return; \
+        } \
     } while(0)
 
 #define DURING_EVENT_ONLY_RET(retVal) \
     do { \
-        if (!m_CurrentPlugin)
-        {
-            Com_PrintError("Attempt to call function '"__FUNCTION_NAME__"' outside of plugin event\n");
-            return retVal;
-        }
+        if (!m_CurrentPlugin) \
+        { \
+            Com_PrintError("Attempt to call function '%s' outside of plugin event\n", FUNCTION_NAME); \
+            return retVal; \
+        } \
     } while(0)
 
 static CPluginHandler g_Instance;
@@ -86,7 +90,9 @@ void CPluginHandler::LoadPlugin(const char* LibName_)
 
 
     // Begin loading new plugin.
-    CPlugin plugin;
+    m_Plugins.emplace(make_pair(LibName_, CPlugin()));
+    //CPlugin plugin;
+    CPlugin& plugin = m_Plugins[LibName_];
     plugin.LoadFromFile(pluginPath);
 
 
@@ -98,6 +104,7 @@ void CPluginHandler::LoadPlugin(const char* LibName_)
         Com_PrintError("Plugin function '%s' not found\n", GetEventName(PLUGINS_ONINFOREQUEST));
         plugin.Unload();
         m_CurrentPlugin = nullptr;
+        m_Plugins.erase(LibName_);
         return;
     }
 
@@ -105,6 +112,7 @@ void CPluginHandler::LoadPlugin(const char* LibName_)
     {
         Com_PrintError("This plugin might not be compatible with this server version! Requested plugin handler version: %d.%d, server's plugin handler version: %d.%d. Unloading the plugin...\n", info.handlerVersion.major, info.handlerVersion.minor, PLUGIN_HANDLER_VERSION_MAJOR, PLUGIN_HANDLER_VERSION_MINOR);
         plugin.Unload();
+        m_Plugins.erase(LibName_);
         return;
     }
     Com_DPrintf("done\n");
@@ -118,6 +126,7 @@ void CPluginHandler::LoadPlugin(const char* LibName_)
         Com_PrintError("Plugin function '%s' not found\n", GetEventName(PLUGINS_ONINIT));
         plugin.Unload();
         m_CurrentPlugin = nullptr;
+        m_Plugins.erase(LibName_);
         return;
     }
     m_CurrentPlugin = nullptr;
@@ -126,6 +135,7 @@ void CPluginHandler::LoadPlugin(const char* LibName_)
     {
         Com_PrintError("Plugin initialization failed: %d\n", success);
         plugin.Unload();
+        m_Plugins.erase(LibName_);
         return;
     }
     Com_DPrintf("done\n");
@@ -134,19 +144,18 @@ void CPluginHandler::LoadPlugin(const char* LibName_)
     plugin.SetInitialized(true);
     // At this point plugin successfully initialized and when at unloading it will fire "OnTerminate" event.
     // Keep passed name as key instead of file path.
-    m_Plugins[LibName_] = plugin;
     Com_Printf("Plugin loaded successfully. Server is currently running %d plugins\n", m_Plugins.size());
 }
 
 void CPluginHandler::UnloadPlugin(const char* LibName_)
 {
-    auto& plugin = m_Plugins.find(LibName_);
+    auto plugin = m_Plugins.find(LibName_);
     if (plugin == m_Plugins.end())
     {
         Com_Printf("Plugin '%s' is not loaded\n", LibName_);
         return;
     }
-    m_CurrentPlugin = &plugin;
+    m_CurrentPlugin = &plugin->second;
     plugin->second.Unload(); // May execute event.
     m_CurrentPlugin = nullptr;
 
@@ -156,13 +165,13 @@ void CPluginHandler::UnloadPlugin(const char* LibName_)
 
 void CPluginHandler::PrintPluginInfo(const char* LibName_)
 {
-    auto& plugin = m_Plugins.find(LibName_);
+    auto plugin = m_Plugins.find(LibName_);
     if (plugin == m_Plugins.end())
     {
         Com_Printf("Plugin '%s' is not loaded\n", LibName_);
         return;
     }
-    m_CurrentPlugin = &plugin;
+    m_CurrentPlugin = &plugin->second;
     plugin->second.PrintPluginInfo();
     m_CurrentPlugin = nullptr;
 }
@@ -215,7 +224,7 @@ void CPluginHandler::RemoveConsoleCommand(const char* const Name_)
     m_CurrentPlugin->RemoveConsoleCommand(Name_);
 }
 
-bool CPluginHandler::isLegacyPlugin(const std::string& LibPath_) const
+bool CPluginHandler::isLegacyPlugin(const string& LibPath_) const
 {
     // Do not test against name.
     // If plugin's checksum known - we know this plugin and we can load it no matter what name is.
@@ -224,7 +233,7 @@ bool CPluginHandler::isLegacyPlugin(const std::string& LibPath_) const
 
     // Get hash of this file.
     char pluginHash[128] = {'\0'};
-    int sizeOfHash = sizeof(pluginHash);
+    unsigned long sizeOfHash = sizeof(pluginHash);
     Sec_HashFile(SEC_HASH_TIGER, LibPath_.c_str(), pluginHash, &sizeOfHash, qfalse);
 
     // Compare find file hash in the list of known plugins.
@@ -244,7 +253,7 @@ void CPluginHandler::getVersion(int& Major_, int& Minor_) const
     Minor_ = 0;
 }
 
-std::string CPluginHandler::getPluginFilePath(const char* LibName_) const
+string CPluginHandler::getPluginFilePath(const char* LibName_) const
 {
     Com_DPrintf("Checking if the plugin file exists and is of correct format...\n");
     // TODO
@@ -256,4 +265,5 @@ std::string CPluginHandler::getPluginFilePath(const char* LibName_) const
             return;
         }
     #endif
+    return string(LibName_);
 }

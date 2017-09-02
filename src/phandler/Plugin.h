@@ -2,6 +2,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include "../cmd_types.h"
 #include "PluginEvents.h"
 
 class CPlugin
@@ -24,7 +25,7 @@ public:
 
     //////////////////////
     // Prints plugin info.
-    void PrintPluginInfo() const;
+    void PrintPluginInfo();
 
     //////////////////////////////////////////
     // Returns true if current plugin initialized.
@@ -36,16 +37,16 @@ public:
 
     ///////////////////////////////////////////
     // Returns total plugin memory allocations.
-    void GetMemAllocs() const { return m_MemAllocs; }
+    int GetMemAllocs() const { return m_MemAllocs; }
 
     //////////////////////////////////////////
     // Return total allocated memory in bytes.
-    void GetMemAllocsSize() const { return m_AllocatedBytesCount; }
+    int GetMemAllocsSize() const { return m_AllocatedBytesCount; }
 
     /////////////////////
     // Fire plugin event.
-    template <typename... Params>
-    bool Event(EPluginEvent Event_, Params...)
+    template <class...PTypes>
+    bool Event(EPluginEvent Event_, PTypes...Params)
     {
         int idx = static_cast<int>(Event_);
         if (!m_Events[idx])

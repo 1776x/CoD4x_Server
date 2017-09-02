@@ -2,7 +2,7 @@
 
 static struct PluginEventsInfo_t
 {
-    PluginEvents EventIdx;
+    EPluginEvent EventIdx;
     const char* CallbackName;
 } g_PluginEventsInfo[PLUGINS_EVENTS_COUNT] = {
     {PLUGINS_ONINIT, "OnInit"},

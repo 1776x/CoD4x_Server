@@ -26,10 +26,10 @@ endif
 
 ###################
 # Compiler options.
-CC=gcc
+CC=g++
 WIN_DEFINES=WINVER=0x501 PLUGINEXPORT
 LINUX_DEFINES=_GNU_SOURCE PLUGINEXPORT
-CFLAGS=-m32 -Wall -O0 -g -fno-omit-frame-pointer -std=c99
+CFLAGS=-m32 -Wall -O0 -g -fno-omit-frame-pointer -std=c++11
 WIN_LFLAGS=-m32 -g -Wl,--nxcompat,--image-base,0x8040000,--stack,0x800000 -Tlinkerscript_win32.ld -mwindows -static-libgcc -static -lm
 WIN_LLIBS=tomcrypt mbedtls mbedcrypto mbedx509 ws2_32 wsock32 iphlpapi gdi32 winmm stdc++
 LINUX_LFLAGS=-m32 -static-libgcc -rdynamic -Tlinkerscript.ld -Wl,-rpath=./
@@ -103,6 +103,7 @@ C_SOURCES=$(wildcard $(SRC_DIR)/*.c)
 ZLIB_SOURCES=$(wildcard $(ZLIB_DIR)/*.c)
 ASSETS_SOURCES=$(wildcard $(ASSETS_DIR)/*.c)
 PHANDLER_SOURCES=$(wildcard $(PHANDLER_DIR)/*.c)
+PHANDLER_CPP_SRC=$(wildcard $(PHANDLER_DIR)/*.cpp)
 
 #################################################################
 # Object files lists. (prefixes for rules may be required later).
@@ -111,6 +112,7 @@ C_OBJ=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
 ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 ASSETS_OBJ=$(patsubst $(ASSETS_DIR)/%.c,$(OBJ_DIR)/%.o,$(ASSETS_SOURCES))
 PHANDLER_OBJ=$(patsubst $(PHANDLER_DIR)/%.c,$(OBJ_DIR)/%.o,$(PHANDLER_SOURCES))
+PHANDLER_CPP_OBJ=$(patsubst $(PHANDLER_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(PHANDLER_CPP_SRC))
 
 #############################################################
 #############################################################
@@ -144,7 +146,7 @@ endif
 
 ###############################
 # A rule to link server binary.
-$(TARGET): $(PHANDLER_OBJ) $(OS_OBJ) $(C_OBJ) $(ZLIB_OBJ) $(ASSETS_OBJ) $(ASM_OBJ) obj/version.o
+$(TARGET): $(PHANDLER_CPP_OBJ) $(PHANDLER_OBJ) $(OS_OBJ) $(C_OBJ) $(ZLIB_OBJ) $(ASSETS_OBJ) $(ASM_OBJ) obj/version.o
 	@echo   $(CC)  $@
 # CFLAGS for compiler, LFLAGS for linker.
 	@$(CC) $(LFLAGS) -o $@ $^ $(RESOURCE_FILE) $(LLIBS)
@@ -170,6 +172,13 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 # A rule to build plugin handler code.
 # -march=nocona
 $(OBJ_DIR)/%.o: $(PHANDLER_DIR)/%.c
+	@echo   $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(C_DEFINES) -o $@ $<
+
+#####################################
+# A rule to build plugin handler CPP code.
+# -march=nocona
+$(OBJ_DIR)/%.o: $(PHANDLER_DIR)/%.cpp
 	@echo   $(CC)  $@
 	@$(CC) -c $(CFLAGS) $(C_DEFINES) -o $@ $<
 

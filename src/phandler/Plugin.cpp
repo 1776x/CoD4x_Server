@@ -1,4 +1,11 @@
 #include "Plugin.h"
+#include "phandler_shared_types.h"
+#include "../qcommon_io.h"
+#include "../sys_main.h"
+#include "../cmd.h"
+#include <algorithm>
+
+using namespace std;
 
 CPlugin::CPlugin() :
     m_LibHandle(nullptr),
@@ -11,8 +18,6 @@ CPlugin::CPlugin() :
 
 CPlugin::~CPlugin()
 {
-    // I'm not sure if this is good idea because
-    //   in destructor object is being deleted. (dunno what this means LOL)
     Unload();
 }
 
@@ -32,8 +37,8 @@ void CPlugin::LoadFromFile(const std::string &LibPath_)
 
 
     Com_DPrintf("Loading events callbacks...");
-    for (PluginEvents ev = PLUGINS_EVENTS_START; ev < PLUGINS_EVENTS_COUNT; ++ev)
-        m_Events[static_cast<int>(ev)] = Sys_GetProcedure(GetEventName(ev));
+    for (int ev = PLUGINS_EVENTS_START; ev < PLUGINS_EVENTS_COUNT; ++ev)
+        m_Events[ev] = Sys_GetProcedure(GetEventName((EPluginEvent)ev));
     Com_DPrintf("done\n");
 }
 
@@ -81,7 +86,7 @@ void CPlugin::Unload()
     m_LibHandle = nullptr; // Prevent unloading from destructor.
 }
 
-void CPlugin::PrintPluginInfo() const
+void CPlugin::PrintPluginInfo() // const impossible because of "Event" call
 {
     // We know, plugin has required events.
     SPluginInfo_t info;
@@ -132,7 +137,7 @@ void* CPlugin::Malloc(size_t Size_)
     }
 
     Com_DPrintf("Allocating %dB of memory for plugin...", Size_);
-    void* mem = reinterpret_cast<void*>(new char[Size_]);
+    void* mem = reinterpret_cast<void*>(malloc(Size_));
     if (!mem)
     {
         Com_DPrintf("failed: not enough memory\n");
@@ -158,7 +163,7 @@ void CPlugin::Free(const void* Ptr_)
         if (pMem == Ptr_)
         {
             m_MemStorage.remove(pMem);
-            delete[] Ptr_;
+            free(pMem);
             Com_DPrintf("done\n");
             return;
         }
@@ -177,7 +182,8 @@ void CPlugin::RemoveConsoleCommand(const char* const Name_)
 {
     Com_DPrintf("Removing custom console command '%s' from plugin...", Name_);
     string sName = Name_;
-    auto& itCmdName = find(m_CustomCmds.begin(), m_CustomCmds.end(), sName);
+    // std::find issue.
+    /*auto& itCmdName = std::find(m_CustomCmds.begin(), m_CustomCmds.end(), sName);
     if (itCmdName == m_CustomCmds.end())
     {
         Com_PrintError("Custom command '%s' not belongs to this plugin\n", Name_);
@@ -185,6 +191,7 @@ void CPlugin::RemoveConsoleCommand(const char* const Name_)
     }
     Cmd_RemoveCommand(Name_);
     m_CustomCmds.remove(itCmdName);
+    */
     Com_DPrintf("done\n");
 }
 

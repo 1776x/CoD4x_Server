@@ -192,7 +192,7 @@ extern pluginScriptCallStubBase_t pluginScriptCallStubs;
 //  Plugin Handler's own functions //
 // --------------------------------//
 int PHandler_GetID(const char *name);
-void PHandler_Event(PluginEvents Event_, ...);
+void PHandler_Event(EPluginEvent Event_, ...);
 void PHandler_Init();
 void *PHandler_Malloc(int, size_t);
 void PHandler_Free(int, void *);

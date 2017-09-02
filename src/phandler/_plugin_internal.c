@@ -19,7 +19,7 @@
 ===========================================================================
 */
 
-#include "phandler.h"
+#include "_plugin_internal.c"
 #include "../q_platform.h"
 #include "../sys_main.h"
 #include "../objfile_parser.h"
@@ -111,7 +111,7 @@ int PHandler_GetID(const char *name) // Get ID of a plugin by name, safe for use
     return PLUGIN_UNKNOWN;
 }
 
-void PHandler_Event(PluginEvents Event_, ...) // Fire a plugin event, safe for use
+void PHandler_Event(EPluginEvent Event_, ...) // Fire a plugin event, safe for use
 {
     if (!pluginFunctions.enabled)
         return;

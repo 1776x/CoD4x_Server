@@ -14,33 +14,6 @@
 #include "../misc.h"
 #include "../sys_net_types.h"
 
-// Helpers macro to save some space.
-#ifndef FUNCTION_NAME
-#ifdef WIN32   //WINDOWS
-    #define FUNCTION_NAME (__FUNCTION__)
-#else          //*NIX
-    #define FUNCTION_NAME (__func__)
-#endif
-#endif
-
-#define THREAD_UNSAFE() \
-    do { \
-        if (Sys_IsMainThread() == qfalse) \
-        { \
-            Com_PrintError("Attempting to execute non thread safe function '%s'\n", FUNCTION_NAME); \
-            return; \
-        } \
-    } while(0)
-
-#define THREAD_UNSAFE_RET(retVal) \
-    do { \
-        if (Sys_IsMainThread() == qfalse) \
-        { \
-            Com_PrintError("Attempting to execute non thread safe function '%s'\n", FUNCTION_NAME); \
-            return retVal; \
-        } \
-    } while(0)
-
 ///////////////////////////////////////////////////////////////////////////
 // Exported functions definitions lower.                                 //
 // If function thread safe - it contains no "THREAD_UNSAFE*(...)" macro. //
@@ -55,7 +28,7 @@ void Plugin_Com_Printf(const char *fmt, ...)
     Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
-    Com_Printf(buffer);
+    PluginHandler()->Print(buffer);
 }
 
 void Plugin_Com_PrintWarning(const char *fmt, ...)
@@ -67,7 +40,7 @@ void Plugin_Com_PrintWarning(const char *fmt, ...)
     Q_vsnprintf(buffer, sizeof(buffer), fmt, va);    
     va_end(va);
 
-    Com_PrintWarning(buffer);
+    PluginHandler()->PrintWarning(buffer);
 }
 
 void Plugin_Com_PrintError(const char *fmt, ...)
@@ -79,7 +52,7 @@ void Plugin_Com_PrintError(const char *fmt, ...)
     Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
-    Com_PrintError(buffer);
+    PluginHandler()->PrintError(buffer);
 }
 
 void Plugin_Com_DPrintf(const char *fmt, ...)
@@ -91,24 +64,21 @@ void Plugin_Com_DPrintf(const char *fmt, ...)
     Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
-    Com_DPrintf(buffer);
+    PluginHandler()->PrintDeveloper(buffer);
 }
 
 void Plugin_Com_RandomBytes(void *ptr, int len)
 {
-    THREAD_UNSAFE();
-    Com_RandomBytes(ptr, len);
+    PluginHandler()->FillWithRandomBytes(static_cast<byte*>(ptr), len);
 }
 
 time_t Plugin_Com_GetRealtime()
 {
-    THREAD_UNSAFE_RET(0);
-    return Com_GetRealtime();
+    PluginHandler()->GetRealTime();
 }
 
 void Plugin_SV_PrintAdministrativeLog(const char *fmt, ...)
 {
-    THREAD_UNSAFE();
     char buffer[1024];
     va_list va;
 
@@ -116,30 +86,27 @@ void Plugin_SV_PrintAdministrativeLog(const char *fmt, ...)
     Q_vsnprintf(buffer, sizeof(buffer), fmt, va);
     va_end(va);
 
-    SV_PrintAdministrativeLog(buffer);
+    PluginHandler()->PrintAdministrativeLog(buffer);
 }
 
 void Plugin_SV_PlayerAddBanByip(netadr_t *remote, char *message, int expire)
 {
-    THREAD_UNSAFE();
-    SV_PlayerAddBanByip(remote, message, expire);
+    PluginHandler()->AddBanByIP(remote, message, expire);
 }
 
 void Plugin_SV_RemoveBanByip(netadr_t *remote)
 {
-    THREAD_UNSAFE();
-    SV_RemoveBanByip(remote);
+    PluginHandler()->RemoveBanByIP(remote);
 }
 
 const char* Plugin_SV_WriteBanTimelimit(int timeleftminutes, char *outbuffer, int outbufferlen)
 {
-    THREAD_UNSAFE_RET(outbuffer);
-    return SV_WriteBanTimelimit(timeleftminutes, outbuffer, outbufferlen);
+    PluginHandler()->GetBanTimeLimit(timeleftminutes, outbuffer, outbufferlen);
+    return outbuffer;
 }
 
 const char* Plugin_SV_FormatBanMessage(int timeleftminutes, char *outbuffer, int outbufferlen, const char* reasonfmt, ...)
 {
-    THREAD_UNSAFE_RET(outbuffer);
     char buffer[1024];
     va_list va;
 
@@ -147,49 +114,43 @@ const char* Plugin_SV_FormatBanMessage(int timeleftminutes, char *outbuffer, int
     Q_vsnprintf(buffer, sizeof(buffer), reasonfmt, va);
     va_end(va);
 
-    return SV_FormatBanMessage(timeleftminutes, outbuffer, outbufferlen, buffer);
+    PluginHandler()->GetBanMessage(timeleftminutes, outbuffer, outbufferlen, buffer);
+    return outbuffer;
 }
 
 void Plugin_SV_SApiSteamIDToString(uint64_t steamid, char* string, int length)
 {
-    THREAD_UNSAFE();
-    SV_SApiSteamIDToString(steamid, string, length);
+    PluginHandler()->SteamIDToString(steamid, string, length);
 }
 
 void Plugin_SV_SApiSteamIDTo64String(uint64_t steamid, char* string, int length)
 {
-    THREAD_UNSAFE();
-    SV_SApiSteamIDTo64String(steamid, string, length);
+    PluginHandler()->SteamIDToString64(steamid, string, length);
 }
 
 uint64_t Plugin_SV_SApiStringToID(const char* steamidstring)
 {
-    THREAD_UNSAFE_RET(0);
-    return SV_SApiStringToID(steamidstring);
+    return PluginHandler()->StringToSteamID(steamidstring);
 }
 
 qboolean Plugin_SV_SApiSteamIDIndividual(uint64_t steamid)
 {
-    THREAD_UNSAFE_RET(qfalse);
-    return SV_SApiSteamIDIndividual(steamid);
+    return PluginHandler()->IsSteamIDIndividual(steamid) ? qtrue : qfalse;
 }
 
 qboolean Plugin_SV_SApiSteamIDIndividualSteamOnly(uint64_t steamid)
 {
-    THREAD_UNSAFE_RET(qfalse);
-    return SV_SApiSteamIDIndividualSteamOnly(steamid);
+    return PluginHandler()->IsSteamIDIndividualSteamOnly(steamid) ? qtrue : qfalse;
 }
 
 void Plugin_Auth_AddCommandForClientToWhitelist(int clnum, const char* cmd)
 {
-    THREAD_UNSAFE();
-    Auth_AddCommandForClientToWhitelist(clnum, cmd);
+    PluginHandler()->AddCommandForPlayerToWhitelist(clnum, cmd);
 }
 
 qboolean Plugin_Auth_CanPlayerUseCommand(unsigned int clnum, const char* cmd)
 {
-    THREAD_UNSAFE_RET(qfalse);
-    return Auth_CanPlayerUseCommand(clnum, cmd);
+    return PluginHandler()->CanPlayerUseCommand(clnum, cmd) ? qtrue : qfalse;
 }
 
 client_t* Plugin_SV_GetPlayerClByHandle(const char* handle)

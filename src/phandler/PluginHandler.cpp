@@ -17,6 +17,24 @@ using namespace std;
 #endif
 #endif
 
+#define THREAD_UNSAFE() \
+do { \
+    if (Sys_IsMainThread() == qfalse) \
+    { \
+        Com_PrintError("Attempting to execute non thread safe function '%s'\n", FUNCTION_NAME); \
+        return; \
+    } \
+} while(0)
+
+#define THREAD_UNSAFE_RET(retVal) \
+do { \
+    if (Sys_IsMainThread() == qfalse) \
+    { \
+        Com_PrintError("Attempting to execute non thread safe function '%s'\n", FUNCTION_NAME); \
+        return retVal; \
+    } \
+} while(0)
+
 #define DURING_EVENT_ONLY() \
     do { \
         if (!m_CurrentPlugin) \
@@ -272,6 +290,125 @@ void CPluginHandler::TCP_Close(const int Connection_)
     DURING_EVENT_ONLY();
     m_CurrentPlugin->TCP_Close(Connection_);
 }
+
+void CPluginHandler::Print(const char* const Msg_)
+{
+    DURING_EVENT_ONLY();
+    Com_Printf(Msg_);
+}
+
+void CPluginHandler::PrintWarning(const char* const Msg_)
+{
+    DURING_EVENT_ONLY();
+    Com_PrintWarning(Msg_);
+}
+
+void CPluginHandler::PrintError(const char* const Msg_)
+{
+    DURING_EVENT_ONLY();
+    Com_PrintError(Msg_);
+}
+
+void CPluginHandler::PrintDeveloper(const char* const Msg_)
+{
+    DURING_EVENT_ONLY();
+    Com_DPrintf(Msg_);
+}
+
+void CPluginHandler::PrintAdministrativeLog(const char* const Msg_)
+{
+    THREAD_UNSAFE();
+    DURING_EVENT_ONLY();
+    SV_PrintAdministrativeLog(Msg_);
+}
+
+void CPluginHandler::FillWithRandomBytes(byte* Buffer_, const int Size_)
+{
+    THREAD_UNSAFE();
+    DURING_EVENT_ONLY();
+    Com_RandomBytes(Buffer_, Size_);
+}
+
+time_t CPluginHandler::GetRealTime()
+{
+    THREAD_UNSAFE_RET(0);
+    DURING_EVENT_ONLY(0);
+    return Com_GetRealtime();
+}
+
+void CPluginHandler::AddBanByIP(netadr_t* Remote_, const char* const Message_, int Expire_)
+{
+    THREAD_UNSAFE();
+    DURING_EVENT_ONLY();
+    SV_PlayerAddBanByIp(Remote_, Message_, Expire_);
+}
+
+void CPluginHandler::RemoveBanByIP(netadr_t* Remote_)
+{
+    THREAD_UNSAFE();
+    DURING_EVENT_ONLY();
+    SV_RemoveBanByIP(Remote_);
+}
+
+void CPluginHandler::GetBanTimeLimit(int MinutesLeft_, char* const Buffer_, const int Size_)
+{
+    THREAD_UNSAFE();
+    DURING_EVENT_ONLY();
+    SV_WriteBanTimelimit(MinutesLeft_, Buffer_, Size_);
+}
+
+void CPluginHandler::GetBanMessage(int MinutesLeft_, char* const Buffer_, const int Size_, const char* const Reason_)
+{
+    THREAD_UNSAFE();
+    DURING_EVENT_ONLY();
+    SV_FormatBanMessage(MinutesLeft_, Buffer_, Size_, Reason_);
+}
+
+void CPluginHandler::SteamIDToString(uint64_t SteamID_, char* const Buffer_, const int Size_)
+{
+    DURING_EVENT_ONLY();
+    SV_SApiSteamIDToString(SteamID_, Buffer_, Size_);
+}
+
+void CPluginHandler::SteamIDToString64(uint64_t SteamID_, char* const Buffer_, const int Size_)
+{
+    DURING_EVENT_ONLY();
+    SV_SApiSteamIDTo64String(SteamID_, Buffer_, Size_);
+}
+
+uint64_t CPluginHandler::StringToSteamID(const char* const String_) const
+{
+    DURING_EVENT_ONLY_RET(0);
+    return SV_SApiStringToID(String_);
+}
+
+bool CPluginHandler::IsSteamIDIndividual(uint64_t SteamID_) const
+{
+    DURING_EVENT_ONLY_RET(false);
+    return SV_SApiSteamIDIndividual(SteamID_) == qtrue ? true : false;
+}
+
+void CPluginHandler::AddCommandForPlayerToWhitelist(const int ClientNum_, const char* const Command_) const
+{
+    THREAD_UNSAFE();
+    DURING_EVENT_ONLY();
+    Auth_AddCommandForClientToWhitelist(ClientNum_, Command_);
+}
+
+bool CPluginHandler::CanPlayerUseCommand(const int ClientNum_, const char* const Command_) const
+{
+    THREAD_UNSAFE_RET(false);
+    DURING_EVENT_ONLY_RET(false);
+    return Auth_CanPlayerUseCommand(ClientNum_, Command_) == qtrue ? true : false;
+}
+
+bool CPluginEvent::IsSteamIDIndividualSteamOnly(uint64_t SteamID_) const
+{
+    DURING_EVENT_ONLY_RET(false);
+    return SV_SApiSteamIDIndividualSteamOnly(SteamID_) == qtrue ? true : false;
+}
+
+
 
 bool CPluginHandler::isLegacyPlugin(const string& LibPath_) const
 {

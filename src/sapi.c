@@ -20,7 +20,7 @@ cvar_t* sv_usesteam64id;
 
 int (*Init)(imports_t* sapi_imports, exports_t* exports);
 
-
+// Thread safe
 void SV_SApiSteamIDTo64String(uint64_t steamid, char* string, int length)
 {
 	if(length < 20)
@@ -135,7 +135,7 @@ static uint64_t ParseSteam3ID(const char* h)
 		return steamid;
 }
 
-
+// thread safe
 static uint64_t ParseLegacySteamID(const char* h)
 {
 	uint16_t instance;
@@ -274,7 +274,7 @@ qboolean SV_SApiSteamIDIndividualSteamOnly(uint64_t steamid)
 	return qtrue;
 }
 
-
+// Thread safe
 uint64_t SV_SApiStringToID(const char* string)
 {
 	//detect type:
@@ -294,6 +294,7 @@ uint64_t SV_SApiStringToID(const char* string)
 
 char accounttypechars[] = {'I', 'U', 'M', 'G', 'A', 'P', 'C', 'g', 'T', ' ', 'a'};
 
+// Thread safe,
 void SV_SApiSteamIDTo3IDString(uint64_t steamid, char* string, int length)
 {
 
@@ -312,7 +313,7 @@ void SV_SApiSteamIDTo3IDString(uint64_t steamid, char* string, int length)
 	Com_sprintf(string, length, "[%c:%u:%u]", accounttypechars[accounttype], universe, accountid);
 }
 
-
+// Thread safe.
 void SV_SApiSteamIDToString(uint64_t steamid, char* string, int length)
 {
 	if(sv_usesteam64id && sv_usesteam64id->boolean)

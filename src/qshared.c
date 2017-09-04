@@ -454,7 +454,7 @@ int Q_CountChar(const char *string, char tocount)
 
 	return count;
 }
-
+// Thread safe.
 int QDECL Com_sprintf(char *dest, int size, const char *fmt, ...)
 {
 	int		len;

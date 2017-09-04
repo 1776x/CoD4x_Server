@@ -101,6 +101,78 @@ public:
     // Close TCP connections for current plugin.
     void TCP_Close(const int Connection_);
 
+    ////////////////////////////
+    // Print message to console.
+    void Print(const char* const Msg_);
+
+    //////////////////////////////////////////
+    // Print warning-style message to console.
+    void PrintWarning(const char* const Msg_);
+
+    //////////////////////////////////
+    // Print error message to console.
+    void PrintError(const char* const Msg_);
+
+    ////////////////////////////////////////
+    // Print message in developer mode only.
+    void PrintDeveloper(const char* const Msg_);
+
+    ///////////////////////////////////////
+    // Print message to administrative log.
+    void PrintAdministrativeLog(const char* const Msg_);
+
+    /////////////////////////////////
+    // Fill buffer with random bytes.
+    void FillWithRandomBytes(byte* Buffer_, const int Size_);
+
+    ///////////////////////////
+    // Returns real world time.
+    time_t GetRealTime();
+
+    ////////////////////////////////
+    // Add player ban by IP address.
+    void AddBanByIP(netadr_t* Remote_, const char* const Message_, int Expire_);
+
+    ///////////////////////////////////
+    // Remove player ban by IP address.
+    void RemoveBanByIP(netadr_t* Remote_);
+
+    //////////////////////////////////////////////////
+    // Get player ban time limit and save into buffer.
+    void GetBanTimeLimit(int MinutesLeft_, char* const Buffer_, const int Size_);
+
+    ///////////////////////////////////////////////
+    // Get player ban message and save into buffer.
+    void GetBanMessage(int MinutesLeft_, char* const Buffer_, const int Size_, const char* const Reason_);
+
+    /////////////////////////////////////
+    // Convert numeric SteamID to string.
+    void SteamIDToString(uint64_t SteamID_, char* const Buffer_, const int Size_);
+
+    /////////////////////////////////////
+    // Convert numeric SteamID to string.
+    void SteamIDToString64(uint64_t SteamID_, char* const Buffer_, const int Size_);
+
+    ////////////////////////////////////////////
+    // Convert string representation to SteamID.
+    uint64_t StringToSteamID(const char* const String_) const;
+
+    ///////////////////////////////////////////////
+    // Return true if passed SteamID is individual.
+    bool IsSteamIDIndividual(uint64_t SteamID_) const;
+
+    /////////////////////////
+    // Return true if WHAAAT? TODO
+    bool IsSteamIDIndividualSteamOnly(uint64_t SteamID_) const;
+
+    ////////////////
+    // WHAAAAAAAAAT? TODO
+    void AddCommandForPlayerToWhitelist(const int ClientNum_, const char* const Command_) const;
+
+    ///////
+    // TODO
+    bool CanPlayerUseCommand(const int ClientNum_, const char* const Command_) const;
+
 private:
     ////////////////////////////////////////////////////////////////
     // Returns true if plugin with name LibName_ has known checksum.

@@ -71,9 +71,12 @@ void CPlugin::Unload()
         Event(PLUGINS_ONTERMINATE);
         m_Initialized = false;
     }
+
+    Event(PLUGINS_ONUNLOAD);
+
     freeAllocatedMemory();
     removeAllCustomConsoleCommands();
-    Event(PLUGINS_ONUNLOAD);
+    closeAllSockets();
 
     /*
     // Remove all server commands of the plugin
@@ -200,6 +203,97 @@ void CPlugin::RemoveConsoleCommand(const char* const Name_)
     Com_DPrintf("done\n");
 }
 
+int CPlugin::TCP_Connect(const char* const Remote_, FPNetworkReceiveCallback ReceiveCallback_)
+{
+    Com_DPrintf("Opening new TCP connection to '%s'...", Remote_);
+
+    int socket = NET_TcpClientConnect(Remote_);
+    if (socket < 1)
+    {
+        Com_Printf("Failed to open TCP connection to server '%s'\n", Remote_);
+        return SOCKET_ERROR;
+    }
+    SNetworkConnectionInfo info;
+    info.ReceiveCallback = ReceiveCallback_;
+    NET_StringToAdr(Remote_, &info.Remote, NA_UNSPEC);
+    m_Sockets[socket] = info;
+
+    Com_DPrintf("done\n");
+    return socket;
+}
+
+int CPlugin::TCP_Send(const int Connection_, const void* const Data_, unsigned int Size_)
+{
+    if (!Data_ || !Size_)
+    {
+        Com_PrintError("Attempting to send NULL buffer\n");
+        return SOCKET_ERROR;
+    }
+
+    if (m_Sockets.find(Connection_) == m_Sockets.end())
+    {
+        Com_PrintError("Unknown plugin socket\n");
+        return SOCKET_ERROR;
+    }
+
+    char errMsg[256] = {'\0'};
+    int sent = NET_TcpSendData(Connection_, Data_, Size_, errMsg, sizeof(errMsg));
+
+    if (sent == NET_WANT_WRITE)
+        return 0;
+
+    if (sent == SOCKET_ERROR)
+        Com_PrintError("Failed to send data to a TCP socket: %s\n", errMsg);
+
+    return sent; // Count of sent bytes or SOCKET_ERROR.
+}
+
+int CPlugin::TCP_Receive(const int Connection_, void* const Buffer_, unsigned int Size_)
+{
+    if (!Buffer_)
+    {
+        Com_PrintError("Output buffer must not be NULL\n");
+        return SOCKET_ERROR;
+    }
+
+    if (!Size_) // Unknown buffer size. Nowhere to read to. Not an error but dev's mistake.
+    {
+        Com_PrintWarning("Zero length buffer size passed\n");
+        return 0;
+    }
+    
+    if (m_Sockets.find(Connection_) == m_Sockets.end())
+    {
+        Com_PrintError("Unknown socket for plugin\n");
+        return SOCKET_ERROR;
+    }
+    
+    char errormsg[256] = {'\0'};
+    len = NET_TcpClientGetData(Connection_, Buffer_, Size_, errormsg, sizeof(errormsg));
+
+    if (len == NET_WANT_READ)
+        return 0;
+
+    if (len == SOCKET_ERROR) // Something went wrong.
+        Com_PrintError("Failed to receive data from TCP socket: %s\n", errormsg);
+    
+    return len; // Count of received bytes or SOCKET_ERROR
+}
+
+void CPlugin::TCP_Close(const int Connection_)
+{
+    Com_DPrintf("Closing TCP socket...");
+    if (m_Sockets.find(Connection_) == m_Sockets.end())
+    {
+        Com_PrintWarning("Failed to close unknown connection socket\n");
+        return;
+    }
+
+    NET_TcpCloseSocket(Connection_);
+    m_Sockets.erase(Connection_);
+    Com_DPrintf("done\n");
+}
+
 void CPlugin::freeAllocatedMemory()
 {
     for (auto pMem : m_MemStorage)
@@ -215,4 +309,11 @@ void CPlugin::removeAllCustomConsoleCommands()
     for (auto& conCmd : m_CustomCmds)
         RemoveConsoleCommand(conCmd.c_str());
     m_CustomCmds.clear();
+}
+
+void CPlugin::closeAllSockets()
+{
+    for (auto& it : m_Sockets)
+        NET_TcpCloseSocket(it.first);
+    m_Sockets.clear();
 }

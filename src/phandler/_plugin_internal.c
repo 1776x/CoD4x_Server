@@ -19,7 +19,7 @@
 ===========================================================================
 */
 
-#include "_plugin_internal.c"
+#include "_plugin_internal.h"
 #include "../q_platform.h"
 #include "../sys_main.h"
 #include "../objfile_parser.h"

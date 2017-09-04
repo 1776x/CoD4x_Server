@@ -32,132 +32,11 @@
  *==========================================*/
 
 /*
-============
- TCP module
-============
-*/
-
-qboolean PHandler_TcpConnect(int pID, const char *remote, int connection)
-{
-    if (pluginFunctions.plugins[pID].sockets[connection].sock < 1)
-    {
-        pluginFunctions.plugins[pID].sockets[connection].sock = NET_TcpClientConnect(remote);
-
-        if (pluginFunctions.plugins[pID].sockets[connection].sock < 1)
-        {
-            Com_Printf("Plugins: Notice! Error connecting to server: %s for plugin #%d!\n", remote, pID);
-            return qfalse;
-        }
-        Com_DPrintf("PHandler_TcpConnect: Received socket %d @ %d\n", pluginFunctions.plugins[pID].sockets[connection].sock, connection);
-        NET_StringToAdr(remote, &pluginFunctions.plugins[pID].sockets[connection].remote, NA_UNSPEC);
-        return qtrue;
-    }
-    Com_PrintError("Plugin_TcpConnect: Connection id %d is already in use for plugin #%d!\n", connection, pID);
-
-    return qfalse;
-}
-
-int PHandler_TcpGetData(int pID, int connection, void *buf, int size)
-{
-    char errormsg[1024];
-    errormsg[0] = 0;
-    int len;
-    pluginTcpClientSocket_t *ptcs = &pluginFunctions.plugins[pID].sockets[connection];
-
-    if (ptcs->sock < 1)
-    {
-        Com_PrintWarning("Plugin_TcpGetData: called on a non open socket for plugin ID: #%d\n", pID);
-        return -1;
-    }
-    len = NET_TcpClientGetData(ptcs->sock, buf, size, errormsg, sizeof(errormsg));
-    //    Com_DPrintf("PHandler_TcpGetData: Retrived data from socket %d @ %d\n", ptcs->sock, connection);
-
-    if (len > 0)
-    {
-        return len;
-    }
-
-    if (len == NET_WANT_READ)
-    {
-        return 0;
-    }
-    Com_DPrintf("PHandler_TcpGetData[%d]: NET_Receive returned %s\n", pID, errormsg);
-    NET_TcpCloseSocket(ptcs->sock);
-    ptcs->sock = -1;
-    return -1;
-}
-
-int PHandler_TcpSendData(int pID, int connection, void *data, int len)
-{
-    int state;
-
-    pluginTcpClientSocket_t *ptcs = &pluginFunctions.plugins[pID].sockets[connection];
-
-    if (ptcs->sock < 1)
-    {
-        Com_PrintWarning("Plugin_TcpSendData: called on a non open socket for plugin ID: #%d\n", pID);
-        return -1;
-    }
-    state = NET_TcpSendData(ptcs->sock, data, len, NULL, 0);
-    //    Com_DPrintf("PHandler_TcpSendData: Sent data from socket %d @ %d\n", ptcs->sock, connection);
-
-    if (state == NET_WANT_WRITE)
-    {
-        return 0;
-    }
-
-    if (state == -1)
-    {
-        NET_TcpCloseSocket(ptcs->sock);
-        ptcs->sock = -1;
-        return -1;
-    }
-    return state;
-}
-
-void PHandler_TcpCloseConnection(int pID, int connection)
-{
-    pluginTcpClientSocket_t *ptcs = &pluginFunctions.plugins[pID].sockets[connection];
-
-    if (ptcs->sock < 1)
-    {
-        Com_PrintWarning("Plugin_TcpCloseConnection: Called on a non open socket for plugin ID: #%d\n", pID);
-        return;
-    }
-    NET_TcpCloseSocket(ptcs->sock);
-    Com_DPrintf("PHandler_TcpCloseConnection: Closed socket %d @ %d\n", ptcs->sock, connection);
-    ptcs->sock = -1;
-}
-
-/*
 =====================================
  Functionality providers for exports
 =====================================
 */
 
-void PHandler_ChatPrintf(int slot, char *fmt, ...)
-{
-    char str[256];
-    client_t *cl;
-    va_list vl;
-
-    cl = slot >= 0 ? &(svs.clients[slot]) : NULL;
-    va_start(vl, fmt);
-    vsprintf(str, fmt, vl);
-    va_end(vl);
-    SV_SendServerCommand(cl, "h \"%s\"", str);
-}
-void PHandler_BoldPrintf(int slot, char *fmt, ...)
-{
-    char str[256];
-    client_t *cl;
-    va_list vl;
-    cl = slot >= 0 ? &(svs.clients[slot]) : NULL;
-    va_start(vl, fmt);
-    vsprintf(str, fmt, vl);
-    va_end(vl);
-    SV_SendServerCommand(cl, "c \"%s\"", str);
-}
 /*
 void PHandler_CmdExecute_f()
 {
@@ -191,31 +70,6 @@ void PHandler_CmdExecute_f()
     }
 }*/
 
-void PHandler_Error(int pID, EPluginError_t code, char *string)
-{
-    if (pluginFunctions.plugins[pID].enabled == qfalse)
-    {
-        Com_PrintWarning("An error of ID %d and string \"%s\" occured in a disabled plugin with ID %d!\n", code, string, pID);
-        return;
-    }
-    switch (code)
-    {
-    case P_ERROR_WARNING:
-        Com_Printf("Plugin #%d ('%s') issued a warning: \"%s\"\n", pID, pluginFunctions.plugins[pID].name, string);
-        break;
-    case P_ERROR_DISABLE:
-        Com_Printf("Plugin #%d ('%s') returned an error and will be disabled! Error string: \"%s\".\n", pID, pluginFunctions.plugins[pID].name, string);
-        pluginFunctions.plugins[pID].enabled = qfalse;
-        break;
-    case P_ERROR_TERMINATE:
-        Com_Printf("Plugin #%d ('%s') reported a critical error, the server will be terminated. Error string: \"%s\".\n", pID, pluginFunctions.plugins[pID].name, string);
-        Com_Error(ERR_FATAL, "%s", string);
-        break;
-    default:
-        Com_DPrintf("Plugin #%d ('%s') reported an unknown error! Error string: \"%s\", error code: %d.\n", pID, pluginFunctions.plugins[pID].name, string, code);
-        break;
-    }
-}
 /*
 ======
  Misc

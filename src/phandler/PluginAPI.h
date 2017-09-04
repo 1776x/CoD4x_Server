@@ -101,10 +101,10 @@
 #define FS_SV_HomeCopyFile Plugin_FS_SV_HomeCopyFile
 #define NET_StringToAdr Plugin_NET_StringToAdr
 #define NET_AdrToString Plugin_NET_AdrToString
-#define NET_AdrToStringMT Plugin_NET_AdrToStringMT
+//#define NET_AdrToStringMT Plugin_NET_AdrToStringMT
 #define NET_AdrToStringShort Plugin_NET_AdrToStringShort
-#define NET_AdrToStringShortMT Plugin_NET_AdrToStringShortMT
-#define NET_AdrMaskToStringMT Plugin_NET_AdrMaskToStringMT
+//#define NET_AdrToStringShortMT Plugin_NET_AdrToStringShortMT
+#define NET_AdrMaskToString Plugin_NET_AdrMaskToString
 #define NET_CompareBaseAdrMask Plugin_NET_CompareBaseAdrMask
 #define NET_CompareBaseAdr Plugin_NET_CompareBaseAdr
 #define NET_CompareAdr Plugin_NET_CompareAdr
@@ -260,10 +260,10 @@ PLUGINAPI int Plugin_FS_SV_BaseWriteFile(const char *qpath, const void *buffer, 
 PLUGINAPI void Plugin_FS_SV_HomeCopyFile(char* from, char* to);
 PLUGINAPI int Plugin_NET_StringToAdr(const char *s, netadr_t *a, netadrtype_t family);
 PLUGINAPI const char* Plugin_NET_AdrToString(netadr_t *a);
-PLUGINAPI const char* Plugin_NET_AdrToStringMT(netadr_t *a, char *buf, int len);
+//PLUGINAPI const char* Plugin_NET_AdrToStringMT(netadr_t *a, char *buf, int len);
 PLUGINAPI const char* Plugin_NET_AdrToStringShort(netadr_t *a);
-PLUGINAPI const char* Plugin_NET_AdrToStringShortMT(netadr_t *a, char* buf, int len);
-PLUGINAPI const char* Plugin_NET_AdrMaskToStringMT(netadr_t *a, char* buf, int len);
+//PLUGINAPI const char* Plugin_NET_AdrToStringShortMT(netadr_t *a, char* buf, int len);
+PLUGINAPI const char* Plugin_NET_AdrMaskToString(netadr_t *a, char* buf, int len);
 PLUGINAPI qboolean Plugin_NET_CompareBaseAdrMask(netadr_t *a, netadr_t *b, int netmask);
 PLUGINAPI qboolean Plugin_NET_CompareBaseAdr(netadr_t *a, netadr_t *b);
 PLUGINAPI qboolean Plugin_NET_CompareAdr(netadr_t *a, netadr_t *b);
@@ -316,10 +316,10 @@ PLUGINAPI void Plugin_Cmd_AddPCommand(const char *cmd_name, xcommand_t function,
 PLUGINAPI void Plugin_Cmd_RemoveCommand(const char *cmd_name);
 
 // Networking: TCP
-PLUGINAPI qboolean Plugin_TcpConnect(int connection, const char *remote);
-PLUGINAPI int Plugin_TcpGetData(int connection, void *buf, int size);
-PLUGINAPI qboolean Plugin_TcpSendData(int connection, void *data, int len);
-PLUGINAPI void Plugin_TcpCloseConnection(int connection);
+PLUGINAPI int Plugin_TcpConnect(const char* Remote_, FPNetworkReceiveCallback ReceiveCallback_);
+PLUGINAPI int Plugin_TcpGetData(const int Connection_, void* const Buffer_, unsigned int Size_);
+PLUGINAPI int Plugin_TcpSendData(const int Connection_, const void* const Data_, unsigned int Size_);
+PLUGINAPI void Plugin_TcpCloseConnection(const int Connection_);
 
 // Networking: UDP
 PLUGINAPI qboolean Plugin_UdpSendData(netadr_t *to, void *data, int len);

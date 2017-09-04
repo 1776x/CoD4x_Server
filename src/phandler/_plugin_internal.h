@@ -51,7 +51,7 @@ typedef void convariable_t; //For plugins
 #include "../scr_vm.h"
 #include "../sys_thread.h"
 
-#include "phandler_events.h"
+#include "PluginEvents.h"
 #include "phandler_shared_types.h"
 
 #define PLUGIN_MAX_MALLOCS 50
@@ -121,7 +121,7 @@ typedef struct
     int sock;
     netadr_t remote;
     qboolean (*packetEventHandler)(netadr_t *from, msg_t *msg);
-} pluginTcpClientSocket_t;
+} pluginTcpClientSocket_t; // unused?
 
 #define MAX_PLUGINCALLBACKS 8
 #define MAX_PLUGINCALLBACKARGS 8
@@ -203,7 +203,6 @@ int PHandler_TcpGetData(int, int, void *, int);
 int PHandler_TcpSendData(int, int, void *, int);
 void PHandler_TcpCloseConnection(int, int);
 int PHandler_CallerID();
-void PHandler_ChatPrintf(int, char *, ...);
 void PHandler_CmdExecute_f(void); // fake server command for use in plugin commands
 void PHandler_Scr_AddMethod(char *name, xfunction_t function, qboolean replace, int pID);
 void PHandler_Scr_AddFunction(char *name, xfunction_t function, qboolean replace, int pID);

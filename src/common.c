@@ -1350,6 +1350,7 @@ Com_Error
 
 Both client and server can use this, and it will
 do the appropriate thing.
+Thread safe.
 =============
 */
 void QDECL Com_Error( int code, const char *fmt, ... ) {

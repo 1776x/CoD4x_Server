@@ -3183,10 +3183,12 @@ void SV_GetConfigstring( int index, char *buffer, int bufferSize ) {
     Q_strncpyz( buffer, cs, bufferSize );
 }
 
-/* SV_GetConfigstringIndex
- * 0x08172FB0
- * T-Max: Should add array index check? 0 <= num < MAX_CONFIGSTRINGS
- */
+/*
+SV_GetConfigstringIndex
+0x08172FB0
+T-Max: Should add array index check? 0 <= num < MAX_CONFIGSTRINGS
+Thread unsafe
+*/
 int SV_GetConfigstringIndex(int num)
 {
     return (int)sv.configstrings[num];

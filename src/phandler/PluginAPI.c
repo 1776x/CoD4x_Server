@@ -12,6 +12,7 @@
 #include "../server.h"
 #include "../httpftp.h"
 #include "../misc.h"
+#include "../sys_net_types.h"
 
 // Helpers macro to save some space.
 #ifndef FUNCTION_NAME
@@ -44,7 +45,7 @@
 // Exported functions definitions lower.                                 //
 // If function thread safe - it contains no "THREAD_UNSAFE*(...)" macro. //
 ///////////////////////////////////////////////////////////////////////////
-
+// Leaving any code without plugin handler attention will make it available to any user, not only to a plugin.
 void Plugin_Com_Printf(const char *fmt, ...)
 {
     char buffer[1024];
@@ -172,7 +173,7 @@ qboolean Plugin_SV_SApiSteamIDIndividual(uint64_t steamid)
     THREAD_UNSAFE_RET(qfalse);
     return SV_SApiSteamIDIndividual(steamid);
 }
-// TODO: continue thread safety from here.
+
 qboolean Plugin_SV_SApiSteamIDIndividualSteamOnly(uint64_t steamid)
 {
     THREAD_UNSAFE_RET(qfalse);
@@ -442,34 +443,34 @@ int Plugin_NET_StringToAdr(const char *s, netadr_t *a, netadrtype_t family)
     THREAD_UNSAFE_RET(0);
     return NET_StringToAdr(s, a, family);
 }
-
+/*
 const char* Plugin_NET_AdrToString(netadr_t *a)
 {
     THREAD_UNSAFE_RET(nullptr);
     return NET_AdrToString(a);
-}
+}*/
 
-const char* Plugin_NET_AdrToStringMT(netadr_t *a, char *buf, int len)
+const char* Plugin_NET_AdrToString(netadr_t *a, char *buf, int len)
 {
-    THREAD_UNSAFE_RET(buf);
+    //THREAD_UNSAFE_RET(buf); // TODO: check safety
     return NET_AdrToStringMT(a, buf, len);
 }
-
+/*
 const char* Plugin_NET_AdrToStringShort(netadr_t *a)
 {
     THREAD_UNSAFE_RET(nullptr);
     return NET_AdrToStringShort(a);
-}
+}*/
 
-const char* Plugin_NET_AdrToStringShortMT(netadr_t *a, char* buf, int len)
+const char* Plugin_NET_AdrToStringShort(netadr_t *a, char* buf, int len)
 {
-    THREAD_UNSAFE_RET(buf);
+    //THREAD_UNSAFE_RET(buf); // TODO: check safety
     return NET_AdrToStringShortMT(a, buf, len);
 }
 
-const char* Plugin_NET_AdrMaskToStringMT(netadr_t *a, char* buf, int len)
+const char* Plugin_NET_AdrMaskToString(netadr_t *a, char* buf, int len)
 {
-    THREAD_UNSAFE_RET(buf);
+    //THREAD_UNSAFE_RET(buf); // TODO: check safety
     return NET_AdrMaskToStringMT(a, buf, len);
 }
 
@@ -499,13 +500,11 @@ unsigned int Plugin_Sys_Milliseconds()
 
 void Plugin_Sys_SleepSec(int seconds)
 {
-    THREAD_UNSAFE();
     Sys_SleepSec(seconds);
 }
 
 void Plugin_Sys_SleepMSec(int msec)
 {
-    THREAD_UNSAFE();
     Sys_SleepMSec(msec);
 }
 
@@ -710,7 +709,6 @@ int Plugin_unzSetPassword(unzFile file, const char* password)
 
 void Plugin_Cbuf_AddText(const char* text)
 {
-    THREAD_UNSAFE();
     Cbuf_AddText(text);
 }
 
@@ -734,19 +732,16 @@ char* Plugin_SL_ConvertToString(unsigned int index)
 
 void Plugin_HTTP_CreateString_x_www_form_urlencoded(char* outencodedstring, int len, const char* key, const char *value)
 {
-    THREAD_UNSAFE();
     HTTP_CreateString_x_www_form_urlencoded(outencodedstring, len, key, value);
 }
 
 void Plugin_HTTP_ParseFormDataBody(char* body, httpPostVals_t* values)
 {
-    THREAD_UNSAFE();
     HTTP_ParseFormDataBody(body, values);
 }
 
 const char* Plugin_HTTP_GetFormDataItem(httpPostVals_t* values, const char* search)
 {
-    THREAD_UNSAFE_RET(nullptr);
     return HTTP_GetFormDataItem(values, search);
 }
 
@@ -768,19 +763,11 @@ void Plugin_Error(EPluginError_t code, const char *fmt, ...)
     va_list argptr;
     char msg[1024];
 
-    volatile int pID = PHandler_CallerID();
-
-    if (pID < 0)
-    {
-        Com_PrintError("Plugin Error called from unknown plugin!\n");
-        return;
-    }
-
     va_start(argptr, fmt);
     Q_vsnprintf(msg, sizeof(msg), fmt, argptr);
     va_end(argptr);
 
-    PHandler_Error(pID, code, msg);
+    PluginHandler()->PluginError(code, msg);
 }
 
 void Plugin_Cmd_AddPCommand(const char *cmd_name, xcommand_t function, int power)
@@ -795,54 +782,47 @@ void Plugin_Cmd_RemoveCommand(const char *cmd_name)
     PluginHandler()->RemoveConsoleCommand(cmd_name);
 }
 
-qboolean Plugin_TcpConnect(int connection, const char *remote)
+int Plugin_TcpConnect(const char* Remote_, FPNetworkReceiveCallback ReceiveCallback_)
 {
-    THREAD_UNSAFE_RET(qfalse);
-    return PHandler_TcpConnectMT(PHandler_CallerID(), connection, remote);
+    THREAD_UNSAFE_RET(-1);
+    return PluginHandler()->TCP_Connect(Remote_, ReceiveCallback_);
 }
 
-int Plugin_TcpGetData(int connection, void *buf, int size)
+int Plugin_TcpGetData(const int Connection_, void* const Buffer_, unsigned int Size_)
 {
-    THREAD_UNSAFE_RET(0);
-    return PHandler_TcpGetDataMT(PHandler_CallerID(), connection, buf, size);
+    THREAD_UNSAFE_RET(SOCKET_ERROR);
+    return PluginHandler()->TCP_Receive(Connection_, Buffer_, Size_);
 }
 
-qboolean Plugin_TcpSendData(int connection, void *data, int len)
+int Plugin_TcpSendData(const int Connection_, const void* const Data_, unsigned int Size_)
 {
-    THREAD_UNSAFE_RET(qfalse);
-    return PHandler_TcpSendDataMT(PHandler_CallerID(), connection, data, len);
+    THREAD_UNSAFE_RET(SOCKET_ERROR);
+    return PluginHandler()->TCP_Send(Connection_, Data_, Size_);
 }
 
-void Plugin_TcpCloseConnection(int connection)
+void Plugin_TcpCloseConnection(const int Connection_)
 {
     THREAD_UNSAFE();
-    PHandler_TcpCloseConnectionMT(PHandler_CallerID(), connection);
+    PluginHandler()->TCP_Close(Connection_);
 }
-
-qboolean Plugin_UdpSendData(netadr_t *to, void *data, int len)
+// todo: move inside plugin and guard with event only, ...() const.
+qboolean Plugin_UdpSendData(netadr_t *To_, void *Data_, int Size_)
 {
     THREAD_UNSAFE_RET(qfalse);
-    int pID;
-
-    if (to == NULL)
+    if (!To_)
     {
-        pID = PHandler_CallerID();
-        Com_PrintError("Plugin_UdpSendData: First argument can not be a NULL-Pointer for plugin ID: #%d\n", pID);
-        return qfalse;
+        Com_PrintError("Unknown destination\n");
+        return false;
+    }
+    if (!Data_ || !Size_)
+    {
+        Com_PrintError("Attempt to send NULL buffer or send nothing\n");
+        return false;
     }
 
-    if (data == NULL)
-    {
-        pID = PHandler_CallerID();
-        Com_PrintError("Plugin_UdpSendData: First argument can not be a NULL-Pointer for plugin ID: #%d\n", pID);
-        return qfalse;
-    }
-
-    netadr_t *defif;
-    defif = NET_GetDefaultCommunicationSocket(to->type);
-    to->sock = defif ? defif->sock : 0;
-
-    return Sys_SendPacket(len, data, to);
+    netadr_t *defif = NET_GetDefaultCommunicationSocket(to->type);
+    To_->sock = defif ? defif->sock : 0;
+    return Sys_SendPacket(Size_, Data_, To_);
 }
 
 void Plugin_ServerPacketEvent(netadr_t *to, void *data, int len)
@@ -866,7 +846,7 @@ uint64_t Plugin_GetPlayerSteamID(unsigned int clientslot)
     int PID = PHandler_CallerID();
     mvabuf;
 
-    if (clientslot > sv_maxclients->integer)
+    if (clientslot >= sv_maxclients->integer)
     {
         PHandler_Error(PID, P_ERROR_DISABLE, va("Plugin tried to get SteamID for bad client: %d\n", clientslot));
     }

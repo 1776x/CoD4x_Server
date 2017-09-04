@@ -49,6 +49,7 @@ typedef union
     char data[12];
 }slTree_t;
 
+// Thread unsafe
 char* SL_ConvertToString(unsigned int location)
 {
     char* string;

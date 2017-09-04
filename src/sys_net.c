@@ -3860,7 +3860,7 @@ qboolean Sys_IsReservedAddress( netadr_t *adr ) {
 	return qfalse;
 }
 
-
+// unsafe
 netadr_t* NET_GetDefaultCommunicationSocket(netadrtype_t family){
 
 	if(family == NA_IP && ip4_socket.sock != INVALID_SOCKET)

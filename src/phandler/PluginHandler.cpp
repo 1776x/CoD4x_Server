@@ -4,6 +4,7 @@
 #include "../cmd.h"
 #include "../qcommon.h"
 #include "../sec_crypto.h"
+#include "../sys_net_types.h"
 #include "phandler_shared_types.h"
 
 using namespace std;
@@ -222,6 +223,54 @@ void CPluginHandler::RemoveConsoleCommand(const char* const Name_)
 {
     DURING_EVENT_ONLY();
     m_CurrentPlugin->RemoveConsoleCommand(Name_);
+}
+
+void CPluginHandler::PluginError(EPluginError_t Code_, const char* const Message_)
+{
+    DURING_EVENT_ONLY();
+
+    switch (Code_)
+    {
+    case P_ERROR_WARNING:
+        Com_Printf("Plugin issued a warning: \"%s\"\n", Message_);
+        break;
+    case P_ERROR_DISABLE:
+        Com_Printf("Plugin returned an error and will be disabled! Error string: \"%s\".\n", Message_);
+        // TODO: disable current plugin.
+        //pluginFunctions.plugins[pID].enabled = qfalse;
+        break;
+    case P_ERROR_TERMINATE:
+        Com_Printf("Plugin reported a critical error, the server will be terminated. Error string: \"%s\".\n", Message_);
+        Com_Error(ERR_FATAL, "%s", Message_);
+        break;
+    default:
+        Com_DPrintf("Plugin reported an unknown error! Error string: \"%s\", error code: %d.\n", Message_, Code_);
+        break;
+    }
+}
+
+int CPluginHandler::TCP_Connect(const char *const Remote_, FPNetworkReceiveCallback ReceiveCallback_)
+{
+    DURING_EVENT_ONLY_RET(SOCKET_ERROR);
+    return m_CurrentPlugin->TCP_Connect(Remote_, ReceiveCallback_);
+}
+
+int CPluginHandler::TCP_Send(const int Connection_, const void *const Data_, unsigned int Size_)
+{
+    DURING_EVENT_ONLY_RET(SOCKET_ERROR);
+    return m_CurrentPlugin->TCP_Send(Connection_, Data_, Size_);
+}
+
+int CPluginHandler::TCP_Receive(const int Connection_, const void *const Buffer_, unsigned int Size_)
+{
+    DURING_EVENT_ONLY_RET(SOCKET_ERROR);
+    return m_CurrentPlugin->TCP_Receive(Connection_, Buffer_, Size_);
+}
+
+void CPluginHandler::TCP_Close(const int Connection_)
+{
+    DURING_EVENT_ONLY();
+    m_CurrentPlugin->TCP_Close(Connection_);
 }
 
 bool CPluginHandler::isLegacyPlugin(const string& LibPath_) const

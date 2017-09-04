@@ -77,6 +77,30 @@ public:
     // Remove console command from plugins.
     void RemoveConsoleCommand(const char* const Name_);
 
+    /////////////////////////
+    // Plugin error happened.
+    void PluginError(EPluginError_t Code_, const char* const Message_);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Open new TCP connection for current plugin.
+    // ReceiveCallback_ is a pointer to a function which gets executed when new data available.
+    // Returns connection index or SOCKET_ERROR.
+    int TCP_Connect(const char* const Remote_, FPNetworkReceiveCallback ReceiveCallback_);
+
+    /////////////////////////////////////////////////////////////
+    // Send TCP data for current plugin for specified connection.
+    // Returns count of sent bytes or SOCKET_ERROR.
+    int TCP_Send(const int Connection_, const void* const Data_, unsigned int Size_);
+
+    ///////////////////////////////////////////////////////////////
+    // Receive TCP data from current plugin's specified connection.
+    // Returns count of received bytes or SOCKET_ERROR.
+    int TCP_Receive(const int Connection_, void* const Buffer_, unsigned int Size_);
+
+    ////////////////////////////////////////////
+    // Close TCP connections for current plugin.
+    void TCP_Close(const int Connection_);
+
 private:
     ////////////////////////////////////////////////////////////////
     // Returns true if plugin with name LibName_ has known checksum.

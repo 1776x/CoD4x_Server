@@ -148,6 +148,7 @@ void Com_Error(int err, char* fmt,...)
 Q_strncpyz
 
 Safe strncpy that ensures a trailing zero
+Thread safe.
 =============
 */
 void Q_strncpyz( char *dest, const char *src, int destsize ) {
@@ -166,7 +167,7 @@ void Q_strncpyz( char *dest, const char *src, int destsize ) {
   dest[destsize-1] = 0;
 }
 
-
+// Thread safe.
 int Q_stricmpn (const char *s1, const char *s2, int n) {
 	int		c1, c2;
 
@@ -223,7 +224,7 @@ int Q_strncmp (const char *s1, const char *s2, int n) {
 
 	return 0;		// strings are equal
 }
-
+// Thread safe.
 int Q_stricmp (const char *s1, const char *s2) {
 	return (s1 && s2) ? Q_stricmpn (s1, s2, 99999) : -1;
 }
@@ -1023,16 +1024,18 @@ char	*SV_ExpandNewlines( char *in ) {
 ============
 Q_strchrrepl
 Parses the string for a given char and replace it with a replacement char
+Thread safe.
 ============
 */
-void Q_strchrrepl(char *string, char torepl, char repl){
-    for(;*string != 0x00;string++){
-	if(*string == torepl){
-	    *string = repl;
-	}
+void Q_strchrrepl(char *string, char torepl, char repl)
+{
+    while(*string)
+    {
+        if (*string == torepl)
+            *string = repl;
+        ++string;
     }
 }
-
 
 //============================================================================
 

@@ -24,3 +24,6 @@ typedef struct SPluginInfo_t
     char shortDescription[128]; // Describe in a few words what this plugin does - optional
     char longDescription[1024]; // Full description - optional
 } SPluginInfo_t;
+
+// Type for a function that gets executed when new data available for selected network protocol.
+typedef void(*FPNetworkReceiveCallback)();

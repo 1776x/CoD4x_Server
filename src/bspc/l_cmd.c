@@ -529,7 +529,7 @@ int Q_strcasecmp( char *s1, char *s2 ) {
 int Q_stricmp( char *s1, char *s2 ) {
 	return Q_strncasecmp( s1, s2, 99999 );
 }
-
+// Thread safe
 void Q_strncpyz( char *dest, const char *src, int destsize ) {
 	strncpy( dest, src, destsize - 1 );
 	dest[destsize - 1] = 0;

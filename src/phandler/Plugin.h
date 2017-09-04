@@ -28,7 +28,7 @@ public:
 
     //////////////////////
     // Prints plugin info.
-    void PrintPluginInfo();
+    void PrintPluginInfo(); // TODO: when all done, add different storages data.
 
     //////////////////////////////////////////
     // Returns true if current plugin initialized.
@@ -75,7 +75,27 @@ public:
     // Remove console command.
     void RemoveConsoleCommand(const char* const Name_);
 
-private:
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Open new TCP connection.
+    // ReceiveCallback_ is a pointer to a function which gets executed when new data available.
+    // Returns connection index or SOCKET_ERROR.
+    int TCP_Connect(const char* const Remote_, FPNetworkReceiveCallback ReceiveCallback_);
+
+    /////////////////////////////////////////////////////////////
+    // Send TCP data for current plugin for specified connection.
+    // Returns count of sent bytes or SOCKET_ERROR.
+    void TCP_Send(const int Connection_, const void* const Data_, unsigned int Size_);
+
+    ///////////////////////////////////////////////////////////////
+    // Receive TCP data from current plugin's specified connection.
+    // Returns count of received bytes or SOCKET_ERROR.
+    int TCP_Receive(const int Connection_, void* const Buffer_, unsigned int Size_);
+
+    ////////////////////////////////////////////
+    // Close TCP connections for current plugin.
+    void TCP_Close(const int Connection_);
+
+  private:
     //////////////////////////////////
     // Frees all the allocated memory.
     void freeAllocatedMemory();
@@ -83,6 +103,12 @@ private:
     ///////////////////////////////////////
     // Removes all custom console commands.
     void removeAllCustomConsoleCommands();
+
+    /////////////////////////////
+    // Closes all opened sockets.
+    void closeAllSockets();
+
+    // TODO networking callbacks
 
     void (*m_Events[PLUGINS_EVENTS_COUNT]);
     void* m_LibHandle;
@@ -102,4 +128,15 @@ private:
     ///////////////////////////
     // Custom console commands.
     std::list<std::string> m_CustomCmds;
+
+    /////////////////////////////////////
+    // Network sockets and its callbacks.
+    struct SNetworkConnectionInfo;
+    std::map<int, SNetworkConnectionInfo> m_Sockets;
 };
+
+struct CPlugin::SNetworkConnectionInfo
+{
+    netadr_t Remote;
+    FPNetworkReceiveCallback ReceiveCallback;
+}
